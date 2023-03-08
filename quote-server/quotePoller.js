@@ -1,6 +1,3 @@
-const express = require('express'); // set up express for routing
-const app = express(); 
-
 const net = require('net');
 const redis = require('redis');
 const SYM = "S";
@@ -23,7 +20,7 @@ exports.getQuoteInfo = (sym, userID) =>{
 
     client.on('data',(data)=>{
         console.log(`Received: ${data}`);
-        setRedisData(data);
+        // setRedisData(data);
         client.destroy();
     });
 
@@ -41,4 +38,3 @@ exports.getQuoteInfo = (sym, userID) =>{
 //         console.error(err);
 //     }
 // }
-// app.get ('/repos/:username')
