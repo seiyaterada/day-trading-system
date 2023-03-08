@@ -1,3 +1,6 @@
+const redis = require('redis');
+const REDIS_PORT = 6379;
+const client_redis = redis.createClient(REDIS_PORT);
 
 export function setRedisData(data){
     try {
