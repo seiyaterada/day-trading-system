@@ -2,7 +2,8 @@ const redis = require('redis');
 const REDIS_PORT = 6379;
 const client_redis = redis.createClient(REDIS_PORT);
 
-export function setRedisData(data){
+export function SetRedisData(data){
+    console.log("Jumpint into redis");
     try {
         // key, expiration, data
         // TO DO: Generate key from data
@@ -11,8 +12,11 @@ export function setRedisData(data){
         console.error(err);
     }
 }
+module.exports = {SetRedisData};
 
-// cache middleware
-export function cache(){
+// cache middleware, may not be needed
+/*
+export function Cache(){
 
 }
+*/

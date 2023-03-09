@@ -8,7 +8,7 @@ npm i express redis
 sudo npm install node-fetch@^2.6.6
 
 ## run the app
-sudo npm run
+sudo npm start
 
 ## intall redis on Macos
 brew install redis 
