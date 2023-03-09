@@ -1,9 +1,11 @@
 const lib = require('./quote_caching');
 const net = require('net');
+
 /* For testing purpose
 const SYM = "S";
 const user_id = "oY01WVirLr";
 */
+
 const HOST = 'quoteserve.seng.uvic.ca';
 const QUOTE_PORT = 4444;
 
@@ -16,7 +18,6 @@ exports.GetQuoteInfo = (sym, userID) =>{
     });
 
     client.on('data',(data)=>{
-
         console.log(`Received: ${data}`);
 
         //quote, SYM, user_id, timestamp, cryptokey}
