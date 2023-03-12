@@ -7,16 +7,14 @@ the DB uses a volume to track stuff, booting it up over and over is a pain
 so to avoid that, booting up only the transaction server side:
 	docker-compose up --build transact
 
+transact.py has some basic stuff to add things into a database. I havent been able to sit down and 
+fully implement this in the transact.js file
 because the DB is persistent, and the main DB idea is append only,
 running the python code will fill it up, so there is a flag at the top of
 transact.py called "makeChanges" which you can turn off to stop adding things
+currently, the js version just sets up a connection to the database and then does a simple read
 
-transact.py shows how an add, buy, sell, or dump call can be made to the DB
-in theory, these are the only calls that will ever be made to the DB:
-calls such as targeted buys will be stored serverside until they run, 
-which would THEN create a buy call to the DB
-
-Again, the DB should only store completed actions, not actions waiting to be completed
+The DB should only store completed actions, not actions waiting to be completed
 
 if the project is running, the mongoDB will stay online indefinitely,
 and you can jump into it to check it out without scripting code:
@@ -26,9 +24,9 @@ will start a terminal in the mongo container, and from there
 will open the terminal mongo interface
 try commands like
 	show dbs
-	use users - the database
-	show collections - all the users that have made transactions
-	db.COLLECTIONNAME.find() - print out all transactions of that user
+	use - attaches to a database
+	show collections
+	db.COLLECTIONNAME.find() - print out all transactions of that collection
 
 when you're ready to take it down, you can stop the database with
 	docker stop DBContainer

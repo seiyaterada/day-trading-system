@@ -1,8 +1,10 @@
 version: '3'
 services:
     transact:
-        build: /transact/
-        command: python ./transact.py
+        build: ./transact/
+    #transactpy:
+    #    build: ./transactpy/
+    #    command: python ./transact.py
     mongo:
         container_name: DBContainer
         volumes:

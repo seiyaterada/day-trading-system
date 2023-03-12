@@ -1,6 +1,8 @@
-FROM python:3.8-slim-buster
+FROM node:latest
 WORKDIR /transact/
-COPY requirements.txt requirements.txt
-RUN pip install -r requirements.txt
+COPY package.json /transact/
+RUN npm install
+RUN npm install mongodb
 COPY . .
-ADD transact.py /transact/
+CMD ["node", "transact.js"]
+
