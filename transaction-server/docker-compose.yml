@@ -1,12 +1,14 @@
 version: '3'
 services:
+    # transact:
+    #     build: ./
     mongo:
         container_name: DBContainer
         volumes:
             - 'mongo-data:/data/db'
         image: 'mongo:latest'
         ports:
-            - '27017:27017'
+            - 27017:27017
 volumes:
   mongo-data:
 
