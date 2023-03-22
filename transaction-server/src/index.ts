@@ -166,10 +166,16 @@ app.post('/buy', async (req, res) => {
   let errorLogs = await db.collection("ERROR_LOGS");
   let users = await db.collection("USERS");
 
-  const transactionId: number = req.body.transactionId;
-  const username: string = req.body.username;
-  const stockSymbol: string = req.body.stockSymbol;
-  const amount: number = req.body.amount;
+  // const transactionId: number = req.body.transactionId;
+  // const username: string = req.body.username;
+  // const stockSymbol: string = req.body.stockSymbol;
+  // const amount: number = req.body.amount;
+
+  // Test Data
+  const transactionId: number = 10;
+  const username: string = "test1";
+  const stockSymbol: string = "SYM";
+  const amount: number = 100;
 
   await userCommandLogs.insertOne({
     transactionId: transactionId, 
@@ -187,7 +193,8 @@ app.post('/buy', async (req, res) => {
     res.send(`Error: User ${username} does not exist`).status(500);
   } else {
     // Get quote from quote server
-    const quote = await getQuote(stockSymbol, username);
+    // const quote = await getQuote(stockSymbol, username);
+    const quote = 10;
     const numStocks = Math.floor(amount / quote);
     const transPrice = numStocks * quote;
     const user = await users.findOne({username: username});
@@ -206,6 +213,9 @@ app.post('/buy', async (req, res) => {
     } else {
       // Add uncommitted buy to user
       try {
+        // First get rid of any uncommitted buys
+        await users.updateOne({username: username}, {$unset: {uncommittedBuys: ""}});
+
         await users.updateOne(
           {username: username}, 
           {$set: 
@@ -254,9 +264,14 @@ app.post('/commitBuy', async (req, res) => {
   let errorLogs = await db.collection("ERROR_LOGS");
   let users = await db.collection("USERS");
 
-  const transactionId: number = req.body.transactionId;
-  const username: string = req.body.username;
-  const stockSymbol: string = req.body.stockSymbol;
+  // const transactionId: number = req.body.transactionId;
+  // const username: string = req.body.username;
+  // const stockSymbol: string = req.body.stockSymbol;
+
+  // Test Data
+  const transactionId: number = 11;
+  const username: string = "test1";
+  const stockSymbol: string = "SYM";
 
   await userCommandLogs.insertOne({
     transactionId: transactionId, 
@@ -301,15 +316,19 @@ app.post('/commitBuy', async (req, res) => {
       username: username, 
       stockSymbol: stockSymbol
     });
-    res.send(`Error: Uncommitted buy expired`).status(500);
+
+    await users.updateOne({username: username}, {$unset: {uncommittedBuys: ""}});
+    return res.send(`Error: Uncommitted buy expired`).status(500);
   }
 
   // check if user owns any shares of the stock
   if (user) {
     try {
       const filter = { username: username };
-  
-      const stockIndex = user.stocks.findIndex((stock:Stock) => stock.stockSymbol === stockSymbol);
+      let stockIndex = -1;
+      if(user.stocks) {
+        stockIndex = user.stocks.findIndex((stock:Stock) => stock.stockSymbol === stockSymbol); 
+      }
       let update = {}
 
       if (stockIndex >= 0) {
@@ -368,7 +387,7 @@ app.post('/commitBuy', async (req, res) => {
   }
 });
 
-app.post('cancelBuy', async (req, res) => {
+app.post('/cancelBuy', async (req, res) => {
   const db = await connectToDatabase();
   if(!db) { 
     res.send("Error: Database connection failed").status(500);
@@ -379,9 +398,14 @@ app.post('cancelBuy', async (req, res) => {
   let errorLogs = await db.collection("ERROR_LOGS");
   let users = await db.collection("USERS");
 
-  const transactionId: number = req.body.transactionId;
-  const username: string = req.body.username;
-  const stockSymbol: string = req.body.stockSymbol;
+  // const transactionId: number = req.body.transactionId;
+  // const username: string = req.body.username;
+  // const stockSymbol: string = req.body.stockSymbol;
+
+  // Test Data
+  const transactionId: number = 12;
+  const username: string = "test1";
+  const stockSymbol: string = "SYM";
 
   await userCommandLogs.insertOne({
     transactionId: transactionId, 
@@ -453,7 +477,7 @@ app.post('cancelBuy', async (req, res) => {
   res.send(`Successfully cancelled buy`).status(200);
 });
 
-app.post('sell', async (req, res) => {
+app.post('/sell', async (req, res) => {
   const db = await connectToDatabase();
   if(!db) {
     res.send("Error: Database connection failed").status(500);
@@ -464,10 +488,16 @@ app.post('sell', async (req, res) => {
   let errorLogs = await db.collection("ERROR_LOGS");
   let users = await db.collection("USERS");
   
-  const transactionId: number = req.body.transactionId;
-  const username: string = req.body.username;
-  const stockSymbol: string = req.body.stockSymbol;
-  const numStocks: number = req.body.numStocks;
+  // const transactionId: number = req.body.transactionId;
+  // const username: string = req.body.username;
+  // const stockSymbol: string = req.body.stockSymbol;
+  // const amount: number = req.body.amount;
+
+  // Test Data
+  const transactionId: number = 14;
+  const username: string = "test1";
+  const stockSymbol: string = "SYM";
+  const amount: number = 100;
 
   await userCommandLogs.insertOne({
     transactionId: transactionId,
@@ -476,10 +506,11 @@ app.post('sell', async (req, res) => {
     command: "SELL",
     username: username,
     stockSymbol: stockSymbol,
-    numStocks: numStocks
+    numStocks: amount
   });
 
-  const quote = await getQuote(stockSymbol, username);
+  // const quote = await getQuote(stockSymbol, username);
+  const quote = 10;
   const userExist = await userExists(username);
 
   if(!userExist) {
@@ -497,8 +528,8 @@ app.post('sell', async (req, res) => {
   }
 
   // Check if user owns any of the stock
-  const user = await users.findOne({username: username});
-  if(!user.stocks[stockSymbol]) {
+  const user = await users.findOne({username: username, stocks:{$elemMatch:{stockSymbol: stockSymbol, numStocks:{ $gt: 0}}}});
+  if(!user) {
     await errorLogs.insertOne({
       transactionId: 1,
       timestamp: new Date(),
@@ -509,12 +540,13 @@ app.post('sell', async (req, res) => {
       stockSymbol: stockSymbol
     });
 
-    res.send(`Error: User ${username} does not own any of the stock`).status(500);
+    return res.send(`Error: User ${username} does not own any of the stock`).status(500);
   }
 
   // Check if user has enough stocks to sell
-  const numStocksSell = Math.floor(numStocks / quote)
-  if(user.stocks[stockSymbol] < numStocksSell) {
+  const numStocksSell = Math.floor(amount / quote)
+  const userStocks = user && user.stocks.find((stock: Stock) => stock.stockSymbol === stockSymbol);
+  if(user && userStocks < numStocksSell) {
     await errorLogs.insertOne({
       transactionId: 1,
       timestamp: new Date(),
@@ -525,11 +557,14 @@ app.post('sell', async (req, res) => {
       stockSymbol: stockSymbol
     });
 
-    res.send(`Error: User ${username} does not have enough stocks to sell`).status(500);
+    return res.send(`Error: User ${username} does not have enough stocks to sell`).status(500);
   }
 
   // Add uncommitted sell to user
   try {
+    // first get rid of any uncommitted sells
+    await users.updateOne({username: username}, {$unset: {uncommittedSells: ""}});
+
     await users.updateOne(
       {username: username}, 
       {$set: 
@@ -570,7 +605,7 @@ app.post('sell', async (req, res) => {
 
 });
 
-app.post('commitSell', async (req, res) => {
+app.post('/commitSell', async (req, res) => {
   const db = await connectToDatabase();
   if(!db) {
     res.send("Error: Database connection failed").status(500);
@@ -581,9 +616,14 @@ app.post('commitSell', async (req, res) => {
   let errorLogs = await db.collection("ERROR_LOGS");
   let users = await db.collection("USERS");
 
-  const transactionId: number = req.body.transactionId;
-  const username: string = req.body.username;
-  const stockSymbol: string = req.body.stockSymbol;
+  // const transactionId: number = req.body.transactionId;
+  // const username: string = req.body.username;
+  // const stockSymbol: string = req.body.stockSymbol;
+
+  // Test Data
+  const transactionId: number = 15;
+  const username: string = "test1";
+  const stockSymbol: string = "SYM";
 
   await userCommandLogs.insertOne({
     transactionId: transactionId,
@@ -607,7 +647,7 @@ app.post('commitSell', async (req, res) => {
       stockSymbol: stockSymbol
     });
 
-    res.send(`Error: User ${username} does not exist`).status(500);
+    return res.send(`Error: User ${username} does not exist`).status(500);
   }
 
   const user = await users.findOne({username: username, uncommittedSells: {$exists: true}});
@@ -618,59 +658,61 @@ app.post('commitSell', async (req, res) => {
       transactionId: 1,
       timestamp: new Date(),
       server: "transaction-server",
-      errorMessage: "No uncommitted sells",
+      errorMessage: "Uncommitted sell expired",
       command: "COMMIT_SELL",
       username: username,
       stockSymbol: stockSymbol
     });
 
-    return res.send(`Error: No uncommitted sells`).status(500);
+    return res.send(`Error: Uncommitted sell expired`).status(500);
   }
 
-  const stockIndex = user.stocks.findIndex((stock:Stock) => stock.stockSymbol === stockSymbol);
+  if(user) {
+    const stockIndex = user.stocks.findIndex((stock:Stock) => stock.stockSymbol === stockSymbol);
 
-  // update user account
-  try {
-    const update = {
-      $inc: {
-        balance: user.uncommittedSells.numStocks * user.uncommittedSells.price,
-        [`stocks.${stockIndex}.numStocks`]: -user.uncommittedSells.numStocks,
-      },
-      $unset: {
-        uncommittedSells: ""
-      }
-    };
-
-    await users.updateOne({username: username}, update);
-
-    await accountTransactionLogs.insertOne({
-      transactionId: 1,
-      timestamp: new Date(),
-      server: "transaction-server",
-      command: "COMMIT_SELL",
-      username: username,
-      stockSymbol: stockSymbol,
-      numStocks: user.uncommittedSells.numStocks,
-      funds: user.uncommittedSells.numStocks * user.uncommittedSells.price
-    });
-
-    res.send(`Successfully committed sell`).status(200);
-  } catch(e:any) {
-    await errorLogs.insertOne({
-      transactionId: 1,
-      timestamp: new Date(),
-      server: "transaction-server",
-      errorMessage: e.message,
-      command: "COMMIT_SELL",
-      username: username,
-      stockSymbol: stockSymbol
-    });
-
-    res.send(`Error: Failed to update account ${username}`).status(500);
+    // update user account
+    try {
+      const update = {
+        $inc: {
+          balance: user.uncommittedSells.price,
+          [`stocks.${stockIndex}.numStocks`]: -user.uncommittedSells.numStocks,
+        },
+        $unset: {
+          uncommittedSells: ""
+        }
+      };
+  
+      await users.updateOne({username: username}, update);
+  
+      await accountTransactionLogs.insertOne({
+        transactionId: 1,
+        timestamp: new Date(),
+        server: "transaction-server",
+        command: "COMMIT_SELL",
+        username: username,
+        stockSymbol: stockSymbol,
+        numStocks: user.uncommittedSells.numStocks,
+        funds: user.uncommittedSells.price
+      });
+  
+      res.send(`Successfully committed sell`).status(200);
+    } catch(e:any) {
+      await errorLogs.insertOne({
+        transactionId: 1,
+        timestamp: new Date(),
+        server: "transaction-server",
+        errorMessage: e.message,
+        command: "COMMIT_SELL",
+        username: username,
+        stockSymbol: stockSymbol
+      });
+  
+      res.send(`Error: Failed to update account ${username}`).status(500);
+    }
   }
 });
 
-app.post('cancelSell', async (req, res) => {
+app.post('/cancelSell', async (req, res) => {
   const db = await connectToDatabase();
   if(!db) {
     res.send("Error: Database connection failed").status(500);
@@ -681,9 +723,14 @@ app.post('cancelSell', async (req, res) => {
   let errorLogs = await db.collection("ERROR_LOGS");
   let users = await db.collection("USERS");
   
-  const transactionId: number = req.body.transactionId;
-  const username: string = req.body.username;
-  const stockSymbol: string = req.body.stockSymbol;
+  // const transactionId: number = req.body.transactionId;
+  // const username: string = req.body.username;
+  // const stockSymbol: string = req.body.stockSymbol;
+
+  // Test Data
+  const transactionId: number = 15;
+  const username: string = "test1";
+  const stockSymbol: string = "SYM";
   
   await userCommandLogs.insertOne({
     transactionId: transactionId,
@@ -728,6 +775,18 @@ app.post('cancelSell', async (req, res) => {
 
       res.send(`Error: Failed to update account ${username}`).status(500);
     }
+    await accountTransactionLogs.insertOne({
+      transactionId: 1,
+      timestamp: new Date(),
+      server: "transaction-server",
+      command: "CANCEL_SELL",
+      username: username,
+      stockSymbol: stockSymbol,
+      numStocks: user.uncommittedSells.numStocks,
+      funds: user.uncommittedSells.price
+    });
+  
+    res.send(`Successfully cancelled sell`).status(200);
   } else {
     await errorLogs.insertOne({
       transactionId: 1,
@@ -741,19 +800,6 @@ app.post('cancelSell', async (req, res) => {
 
     res.send(`Error: No uncommitted sells`).status(500);
   }
-
-  await accountTransactionLogs.insertOne({
-    transactionId: 1,
-    timestamp: new Date(),
-    server: "transaction-server",
-    command: "CANCEL_SELL",
-    username: username,
-    stockSymbol: stockSymbol,
-    numStocks: user.uncommittedSells.numStocks,
-    funds: user.uncommittedSells.numStocks * user.uncommittedSells.price
-  });
-
-  res.send(`Successfully cancelled sell`).status(200);
 });
 
 
