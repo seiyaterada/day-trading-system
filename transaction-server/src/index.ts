@@ -453,6 +453,309 @@ app.post('cancelBuy', async (req, res) => {
   res.send(`Successfully cancelled buy`).status(200);
 });
 
+app.post('sell', async (req, res) => {
+  const db = await connectToDatabase();
+  if(!db) {
+    res.send("Error: Database connection failed").status(500);
+    return;
+  }
+  let userCommandLogs = await db.collection("USER_COMMAND_LOGS");
+  let accountTransactionLogs = await db.collection("ACCOUNT_TRANSACTION_LOGS");
+  let errorLogs = await db.collection("ERROR_LOGS");
+  let users = await db.collection("USERS");
+  
+  const transactionId: number = req.body.transactionId;
+  const username: string = req.body.username;
+  const stockSymbol: string = req.body.stockSymbol;
+  const numStocks: number = req.body.numStocks;
+
+  await userCommandLogs.insertOne({
+    transactionId: transactionId,
+    timestamp: new Date(),
+    server: "transaction-server",
+    command: "SELL",
+    username: username,
+    stockSymbol: stockSymbol,
+    numStocks: numStocks
+  });
+
+  const quote = await getQuote(stockSymbol, username);
+  const userExist = await userExists(username);
+
+  if(!userExist) {
+    await errorLogs.insertOne({
+      transactionId: 1,
+      timestamp: new Date(),
+      server: "transaction-server",
+      errorMessage: "User does not exist",
+      command: "SELL",
+      username: username,
+      stockSymbol: stockSymbol
+    });
+
+    res.send(`Error: User ${username} does not exist`).status(500);
+  }
+
+  // Check if user owns any of the stock
+  const user = await users.findOne({username: username});
+  if(!user.stocks[stockSymbol]) {
+    await errorLogs.insertOne({
+      transactionId: 1,
+      timestamp: new Date(),
+      server: "transaction-server",
+      errorMessage: "User does not own any of the stock",
+      command: "SELL",
+      username: username,
+      stockSymbol: stockSymbol
+    });
+
+    res.send(`Error: User ${username} does not own any of the stock`).status(500);
+  }
+
+  // Check if user has enough stocks to sell
+  const numStocksSell = Math.floor(numStocks / quote)
+  if(user.stocks[stockSymbol] < numStocksSell) {
+    await errorLogs.insertOne({
+      transactionId: 1,
+      timestamp: new Date(),
+      server: "transaction-server",
+      errorMessage: "User does not have enough stocks to sell",
+      command: "SELL",
+      username: username,
+      stockSymbol: stockSymbol
+    });
+
+    res.send(`Error: User ${username} does not have enough stocks to sell`).status(500);
+  }
+
+  // Add uncommitted sell to user
+  try {
+    await users.updateOne(
+      {username: username}, 
+      {$set: 
+        {uncommittedSells: 
+          {stockSymbol: stockSymbol, 
+            numStocks: numStocksSell,
+            price: numStocksSell * quote,
+            timestamp: new Date().setSeconds(new Date().getSeconds() + 60)
+          }
+        }
+      });
+      await accountTransactionLogs.insertOne({
+        transactionId: 1,
+        timestamp: new Date(),
+        server: "transaction-server",
+        command: "SELL",
+        username: username,
+        stockSymbol: stockSymbol,
+        numStocks: numStocksSell,
+        funds: numStocksSell * quote
+      });
+
+      res.send(`Successfully sold ${numStocksSell} stocks`).status(200);
+  } catch(e:any) {
+    await errorLogs.insertOne({
+      transactionId: 1,
+      timestamp: new Date(),
+      server: "transaction-server",
+      errorMessage: e.message,
+      command: "SELL",
+      username: username,
+      stockSymbol: stockSymbol
+    });
+
+    res.send(`Error: Failed to update account ${username}`).status(500);
+  }
+
+
+});
+
+app.post('commitSell', async (req, res) => {
+  const db = await connectToDatabase();
+  if(!db) {
+    res.send("Error: Database connection failed").status(500);
+    return;
+  }
+  let userCommandLogs = await db.collection("USER_COMMAND_LOGS");
+  let accountTransactionLogs = await db.collection("ACCOUNT_TRANSACTION_LOGS");
+  let errorLogs = await db.collection("ERROR_LOGS");
+  let users = await db.collection("USERS");
+
+  const transactionId: number = req.body.transactionId;
+  const username: string = req.body.username;
+  const stockSymbol: string = req.body.stockSymbol;
+
+  await userCommandLogs.insertOne({
+    transactionId: transactionId,
+    timestamp: new Date(),
+    server: "transaction-server",
+    command: "COMMIT_SELL",
+    username: username,
+    stockSymbol: stockSymbol
+  });
+
+  const userExist = await userExists(username);
+
+  if(!userExist) {
+    await errorLogs.insertOne({
+      transactionId: 1,
+      timestamp: new Date(),
+      server: "transaction-server",
+      errorMessage: "User does not exist",
+      command: "COMMIT_SELL",
+      username: username,
+      stockSymbol: stockSymbol
+    });
+
+    res.send(`Error: User ${username} does not exist`).status(500);
+  }
+
+  const user = await users.findOne({username: username, uncommittedSells: {$exists: true}});
+
+  // make sure uncommitted sell not expired
+  if(user && user.uncommittedSells.expiryTime < new Date()) {
+    await errorLogs.insertOne({
+      transactionId: 1,
+      timestamp: new Date(),
+      server: "transaction-server",
+      errorMessage: "No uncommitted sells",
+      command: "COMMIT_SELL",
+      username: username,
+      stockSymbol: stockSymbol
+    });
+
+    return res.send(`Error: No uncommitted sells`).status(500);
+  }
+
+  const stockIndex = user.stocks.findIndex((stock:Stock) => stock.stockSymbol === stockSymbol);
+
+  // update user account
+  try {
+    const update = {
+      $inc: {
+        balance: user.uncommittedSells.numStocks * user.uncommittedSells.price,
+        [`stocks.${stockIndex}.numStocks`]: -user.uncommittedSells.numStocks,
+      },
+      $unset: {
+        uncommittedSells: ""
+      }
+    };
+
+    await users.updateOne({username: username}, update);
+
+    await accountTransactionLogs.insertOne({
+      transactionId: 1,
+      timestamp: new Date(),
+      server: "transaction-server",
+      command: "COMMIT_SELL",
+      username: username,
+      stockSymbol: stockSymbol,
+      numStocks: user.uncommittedSells.numStocks,
+      funds: user.uncommittedSells.numStocks * user.uncommittedSells.price
+    });
+
+    res.send(`Successfully committed sell`).status(200);
+  } catch(e:any) {
+    await errorLogs.insertOne({
+      transactionId: 1,
+      timestamp: new Date(),
+      server: "transaction-server",
+      errorMessage: e.message,
+      command: "COMMIT_SELL",
+      username: username,
+      stockSymbol: stockSymbol
+    });
+
+    res.send(`Error: Failed to update account ${username}`).status(500);
+  }
+});
+
+app.post('cancelSell', async (req, res) => {
+  const db = await connectToDatabase();
+  if(!db) {
+    res.send("Error: Database connection failed").status(500);
+    return;
+  }
+  let userCommandLogs = await db.collection("USER_COMMAND_LOGS");
+  let accountTransactionLogs = await db.collection("ACCOUNT_TRANSACTION_LOGS");
+  let errorLogs = await db.collection("ERROR_LOGS");
+  let users = await db.collection("USERS");
+  
+  const transactionId: number = req.body.transactionId;
+  const username: string = req.body.username;
+  const stockSymbol: string = req.body.stockSymbol;
+  
+  await userCommandLogs.insertOne({
+    transactionId: transactionId,
+    timestamp: new Date(),
+    server: "transaction-server",
+    command: "CANCEL_SELL",
+    username: username,
+    stockSymbol: stockSymbol
+  });
+
+  const userExist = await userExists(username);
+
+  if(!userExist) {
+    await errorLogs.insertOne({
+      transactionId: 1,
+      timestamp: new Date(),
+      server: "transaction-server",
+      errorMessage: "User does not exist",
+      command: "CANCEL_SELL",
+      username: username,
+      stockSymbol: stockSymbol
+    });
+
+    res.send(`Error: User ${username} does not exist`).status(500);
+  }
+
+  const user = await users.findOne({username: username, uncommittedSells: {$exists: true}});
+
+  if(user) {
+    try {
+      await users.updateOne({username: username}, {$unset: {uncommittedSells: ""}});
+    } catch(e:any) {
+      await errorLogs.insertOne({
+        transactionId: 1,
+        timestamp: new Date(),
+        server: "transaction-server",
+        errorMessage: e.message,
+        command: "CANCEL_SELL",
+        username: username,
+        stockSymbol: stockSymbol
+      });
+
+      res.send(`Error: Failed to update account ${username}`).status(500);
+    }
+  } else {
+    await errorLogs.insertOne({
+      transactionId: 1,
+      timestamp: new Date(),
+      server: "transaction-server",
+      errorMessage: "No uncommitted sells",
+      command: "CANCEL_SELL",
+      username: username,
+      stockSymbol: stockSymbol
+    });
+
+    res.send(`Error: No uncommitted sells`).status(500);
+  }
+
+  await accountTransactionLogs.insertOne({
+    transactionId: 1,
+    timestamp: new Date(),
+    server: "transaction-server",
+    command: "CANCEL_SELL",
+    username: username,
+    stockSymbol: stockSymbol,
+    numStocks: user.uncommittedSells.numStocks,
+    funds: user.uncommittedSells.numStocks * user.uncommittedSells.price
+  });
+
+  res.send(`Successfully cancelled sell`).status(200);
+});
+
 
 
 // Load the /posts routes
