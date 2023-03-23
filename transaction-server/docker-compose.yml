@@ -1,0 +1,16 @@
+version: '3'
+services:
+    # transact:
+    #     build: ./
+    mongo:
+        container_name: DBContainer
+        volumes:
+            - 'mongo-data:/data/db'
+        image: 'mongo:latest'
+        ports:
+            - 27017:27017
+volumes:
+  mongo-data:
+
+#if these are seperated, they will no longer exist on the same network, and will be unable to talk
+#if you want to bust up this file, you've been warned
