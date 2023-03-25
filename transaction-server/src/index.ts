@@ -13,18 +13,18 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.get('/redis', async (req, res) => {
-  // const redisClient = await getRedisClient();
+(async () => {
   await redisClient.connect();
-  const result = await redisClient.get("S");
+})();
+
+
+app.get('/redis', async (req, res) => {
+  const result = await getQuote("S", "test1");
   res.send(result);
 });
 
 app.post('/redis', async (req, res) => {
   const sym = "S";
-  // const redisClient = await getRedisClient();
-  await redisClient.connect();
-
   const result = await redisClient.set(sym, 100, {EX: 60});
 
   res.send(result);
