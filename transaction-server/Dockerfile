@@ -8,4 +8,4 @@ RUN npm install
 
 COPY . .
 
-CMD ["npm", "run", "dev"]
+CMD npx ts-node src/index.ts

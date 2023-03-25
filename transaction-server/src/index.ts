@@ -4,6 +4,7 @@ import {connectToDatabase} from "../db/connection";
 import { ErrorType, AccountTransactionType, User, Stock } from "./interfaces";
 import { userExists } from "./userExists";
 import { getQuote } from "./quote";
+import redisClient from "../db/redisClient";
 // import routes from "./routes.mjs";
 
 const PORT = process.env.PORT || 3000;
@@ -11,15 +12,24 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
-// await db.deleteCollection("LOGS");
-// await db.deleteCollection("USERS");
 
-// let userCommandLogs = await db.collection("USER COMMAND LOGS");
-// let accountTransactionLogs = await db.collection("ACCOUNT TRANSACTION LOGS");
-// let errorLogs = await db.collection("ERROR LOGS");
-// let users = await db.collection("USERS");
-// let systemEventLogs = await db.collection("SYSTEM EVENT LOGS");
-// let debugLogs = await db.collection("DEBUG LOGS");
+app.get('/redis', async (req, res) => {
+  // const redisClient = await getRedisClient();
+  await redisClient.connect();
+  const result = await redisClient.get("S");
+  res.send(result);
+});
+
+app.post('/redis', async (req, res) => {
+  const sym = "S";
+  // const redisClient = await getRedisClient();
+  await redisClient.connect();
+
+  const result = await redisClient.set(sym, 100, {EX: 60});
+
+  res.send(result);
+});
+
 
 app.post('/add', async (req, res) => {
   const db = await connectToDatabase();

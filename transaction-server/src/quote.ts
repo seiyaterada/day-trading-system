@@ -1,5 +1,6 @@
 import net from "net";
 import {connectToDatabase} from "../db/connection";
+import redisClient from "../db/redisClient";
 
 // Test Data before transaction server online
 const SYM = "S";
@@ -18,37 +19,37 @@ export const getQuote = async (sym: string, username: string) =>{
     let quoteServerLogs = await db.collection("QUOTE SERVER LOGS");
     let errorLogs = await db.collection("ERROR LOGS");
 
-    let response;
-     const client =  net.createConnection(QUOTE_PORT, HOST,()=>{
-        console.log(`Connecting to the quote server with port ${QUOTE_PORT}`);
-        client.write(`${sym} ${username} \n`);
-    });
+    let result = await redisClient.get(sym);
 
-     client.on('data',async (data)=>{
-        await quoteServerLogs.insertOne({transactionId: 1, timestamp: new Date(), server: "transaction-server", command: "QUOTE", username: username, stockSymbol: sym, quoteServerTime: data[3], cryptokey: data[4]});
-        //quote, SYM, user_id, timestamp, cryptokey}
-        console.log(`Received: ${data}`);
-
-        // pass the cryptokey and orginal data to redis
-        console.log(`KEY IS: ${SYM}`);
-        // lib.SetRedisData(SYM,data);
-        response = data[0];
-        client.destroy();
-    });
-
-    client.on('error',async (err)=>{
-        await errorLogs.insertOne({transactionId: 1, timestamp: new Date(), server: "transaction-server", errorMessage: err.message, command: "QUOTE", username: user_id});
-        console.log(`Error: ${err.message}`);
-        client.destroy();
-        return 0
-    });
-
-     client.on('close',()=>{
-        console.log(`Connection Closed`);
-    });
-    if (response) {
-        return response[0];
-    } else {
-        return 0;
+    if (!result) {
+        try{
+            const client =  net.createConnection(QUOTE_PORT, HOST,()=>{
+                console.log(`Connecting to the quote server with port ${QUOTE_PORT}`);
+                client.write(`${sym} ${username} \n`);
+            });
+        
+             client.on('data',async (data)=>{
+                 
+                client.destroy();
+                await redisClient.set(sym, data[0], {EX: 60});
+                await quoteServerLogs.insertOne({transactionId: 1, timestamp: new Date(), server: "transaction-server", command: "QUOTE", username: username, stockSymbol: sym, quoteServerTime: data[3], cryptokey: data[4]});
+                return data[0];
+            });
+        
+            client.on('error',async (err)=>{
+                await errorLogs.insertOne({transactionId: 1, timestamp: new Date(), server: "transaction-server", errorMessage: err.message, command: "QUOTE", username: user_id});
+                console.log(`Error: ${err.message}`);
+                client.destroy();
+            });
+        
+             client.on('close',()=>{
+                console.log(`Connection Closed`);
+            });
+        } catch(e:any) {
+            console.log(e.message);
+        }
     }
+
+    // Got quote from cache if we made it to this point
+    return result;
 }
