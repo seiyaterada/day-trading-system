@@ -5,6 +5,7 @@ import { ErrorType, AccountTransactionType, User, Stock } from "./interfaces";
 import { userExists } from "./userExists";
 import { getQuote } from "./quote";
 import redisClient from "../db/redisClient";
+import {job} from "./triggerJob";
 // import routes from "./routes.mjs";
 
 const PORT = process.env.PORT || 3000;
@@ -16,6 +17,9 @@ app.use(express.json());
 (async () => {
   await redisClient.connect();
 })();
+
+// Start the trigger job
+job.start();
 
 
 app.get('/redis', async (req, res) => {
@@ -46,7 +50,7 @@ app.post('/add', async (req, res) => {
   const transactionId: number = req.body.transactionId;
   const user: User = {
     username: username,
-    funds: 1000
+    balance: 1000
   }
   await userCommandLogs.insertOne({
     transactionId: 1,  
@@ -54,14 +58,14 @@ app.post('/add', async (req, res) => {
     server: "transaction-server", 
     command: "ADD", 
     username: username, 
-    funds: user.funds
+    funds: user.balance
   });
 
   // if user already exists update account balance
   try {
     const result = await users.updateOne(
       { username: user.username },
-      { $inc: { balance: user.funds } },
+      { $inc: { balance: user.balance } },
       { upsert: true }
     );
   
@@ -71,7 +75,7 @@ app.post('/add', async (req, res) => {
       server: "transaction-server",
       command: "ADD",
       username: username,
-      funds: user.funds
+      funds: user.balance
     });
   
     res.send(result).status(200);
@@ -84,7 +88,7 @@ app.post('/add', async (req, res) => {
       errorMessage: e.message,
       command: "ADD",
       username: username,
-      funds: user.funds
+      funds: user.balance
     });
   
     const errorMsg = `Error: Failed to update account ${username}`;
@@ -764,7 +768,7 @@ app.post('/cancelSell', async (req, res) => {
       stockSymbol: stockSymbol
     });
 
-    res.send(`Error: User ${username} does not exist`).status(500);
+    return res.send(`Error: User ${username} does not exist`).status(500);
   }
 
   const user = await users.findOne({username: username, uncommittedSells: {$exists: true}});
@@ -811,6 +815,729 @@ app.post('/cancelSell', async (req, res) => {
     res.send(`Error: No uncommitted sells`).status(500);
   }
 });
+
+app.post('/setBuyAmount', async (req, res) => {
+  const db = await connectToDatabase();
+  if(!db) {
+    res.send("Error: Database connection failed").status(500);
+    return;
+  }
+  let userCommandLogs = await db.collection("USER_COMMAND_LOGS");
+  let accountTransactionLogs = await db.collection("ACCOUNT_TRANSACTION_LOGS");
+  let errorLogs = await db.collection("ERROR_LOGS");
+  let users = await db.collection("USERS");
+  let triggers = await db.collection("BUY_TRIGGERS");
+
+  // const transactionId: number = req.body.transactionId;
+  // const username: string = req.body.username;
+  // const stockSymbol: string = req.body.stockSymbol;
+  // const amount: number = req.body.amount;
+
+  // Test Data
+  const transactionId: number = 16;
+  const username: string = "test1";
+  const stockSymbol: string = "SYM";
+  const amount: number = 100;
+
+  await userCommandLogs.insertOne({
+    transactionId: transactionId,
+    timestamp: new Date(),
+    server: "transaction-server",
+    command: "SET_BUY_AMOUNT",
+    username: username,
+    stockSymbol: stockSymbol,
+    amount: amount
+  });
+
+  const userExist = await userExists(username);
+
+  if(!userExist) {
+    await errorLogs.insertOne({
+      transactionId: 1,
+      timestamp: new Date(),
+      server: "transaction-server",
+      errorMessage: "User does not exist",
+      command: "SET_BUY_AMOUNT",
+      username: username,
+      stockSymbol: stockSymbol
+    });
+
+    return res.send(`Error: User ${username} does not exist`).status(500);
+  }
+
+  try {
+    await triggers.updateOne({
+      username: username, 
+      stockSymbol: stockSymbol
+      }, 
+      {
+        $inc: 
+        {
+          amount: amount
+        },
+        $set:
+        {
+          triggerPrice: 0,
+          set: false
+        }
+      },
+      {upsert: true}
+    );
+
+    await accountTransactionLogs.insertOne({
+      transactionId: 1,
+      timestamp: new Date(),
+      server: "transaction-server",
+      command: "SET_BUY_AMOUNT",
+      username: username,
+      stockSymbol: stockSymbol,
+      numStocks: amount
+    });
+
+    res.send(`Successfully set buy amount`).status(200);
+  } catch(e:any) {
+    await errorLogs.insertOne({
+      transactionId: 1,
+      timestamp: new Date(),
+      server: "transaction-server",
+      errorMessage: e.message,
+      command: "SET_BUY_AMOUNT",
+      username: username,
+      stockSymbol: stockSymbol
+    });
+
+    res.send(`Error: Failed to set buy amount for ${username}`).status(500);
+  }
+});
+
+app.post('/setBuyTrigger', async (req, res) => {
+  const db = await connectToDatabase();
+  if(!db) {
+    res.send("Error: Database connection failed").status(500);
+    return;
+  }
+  let userCommandLogs = await db.collection("USER_COMMAND_LOGS");
+  let accountTransactionLogs = await db.collection("ACCOUNT_TRANSACTION_LOGS");
+  let errorLogs = await db.collection("ERROR_LOGS");
+  let users = await db.collection("USERS");
+  let triggers = await db.collection("BUY_TRIGGERS");
+  
+  // const transactionId: number = req.body.transactionId;
+  // const username: string = req.body.username;
+  // const stockSymbol: string = req.body.stockSymbol;
+  // const triggerPrice: number = req.body.triggerPrice;
+
+  // Test Data
+  const transactionId: number = 17;
+  const username: string = "test1";
+  const stockSymbol: string = "SYM";
+  const triggerPrice: number = 10;
+
+  await userCommandLogs.insertOne({
+    transactionId: transactionId,
+    timestamp: new Date(),
+    server: "transaction-server",
+    command: "SET_BUY_TRIGGER",
+    username: username,
+    stockSymbol: stockSymbol,
+    triggerPrice: triggerPrice
+  });
+
+  const userExist = await userExists(username);
+
+  if(!userExist) {
+    await errorLogs.insertOne({
+      transactionId: 1,
+      timestamp: new Date(),
+      server: "transaction-server",
+      errorMessage: "User does not exist",
+      command: "SET_BUY_TRIGGER",
+      username: username,
+      stockSymbol: stockSymbol
+    });
+
+    return res.send(`Error: User ${username} does not exist`).status(500);
+  }
+
+  const userTrigger = await triggers.findOne({username: username, stockSymbol: stockSymbol});
+  const user = await users.findOne({username: username});
+
+  if(!userTrigger) {
+    await errorLogs.insertOne({
+      transactionId: 1,
+      timestamp: new Date(),
+      server: "transaction-server",
+      errorMessage: "User does not have set buy amount",
+      command: "SET_BUY_TRIGGER",
+      username: username,
+      stockSymbol: stockSymbol
+    });
+
+    return res.send(`Error: User ${username} does not have set buy amount issued for this stock`).status(500);
+  }
+
+  const transPrice = Number((userTrigger.amount * userTrigger.triggerPrice).toFixed(2));
+
+  if(user && transPrice > user.balance) {
+    await errorLogs.insertOne({
+      transactionId: 1,
+      timestamp: new Date(),
+      server: "transaction-server",
+      errorMessage: "User does not have enough balance",
+      command: "SET_BUY_TRIGGER",
+      username: username,
+      stockSymbol: stockSymbol
+    });
+
+    return res.send(`Error: User ${username} does not have enough balance to set this buy trigger`).status(500);
+  }
+
+  try {
+    await triggers.updateOne({
+      username: username,
+      stockSymbol: stockSymbol
+    },
+    {
+      $set:
+      {
+        triggerPrice: triggerPrice,
+        set: true
+      }
+    });
+
+    // Reserver the amount for the trigger transaction
+    await users.updateOne({
+      username: username
+    },
+    {
+      $inc:
+      {
+        balance: -transPrice,
+        lockedBalance: transPrice
+      }
+    });
+
+    await accountTransactionLogs.insertOne({
+      transactionId: 1,
+      timestamp: new Date(),
+      server: "transaction-server",
+      command: "SET_BUY_TRIGGER",
+      username: username,
+      stockSymbol: stockSymbol,
+      numStocks: userTrigger.amount,
+      price: triggerPrice
+    });
+
+    res.send(`Successfully set buy trigger`).status(200);
+  } catch(e:any) {
+    await errorLogs.insertOne({
+      transactionId: 1,
+      timestamp: new Date(),
+      server: "transaction-server",
+      errorMessage: e.message,
+      command: "SET_BUY_TRIGGER",
+      username: username,
+      stockSymbol: stockSymbol
+    });
+
+    res.send(`Error: Failed to set buy trigger for ${username}`).status(500);
+  }
+});
+
+app.post('/cancelSetBuy', async (req, res) => {
+  const db = await connectToDatabase();
+  if(!db) {
+    res.send("Error: Database connection failed").status(500);
+    return;
+  }
+  let userCommandLogs = await db.collection("USER_COMMAND_LOGS");
+  let accountTransactionLogs = await db.collection("ACCOUNT_TRANSACTION_LOGS");
+  let errorLogs = await db.collection("ERROR_LOGS");
+  let users = await db.collection("USERS");
+  let triggers = await db.collection("BUY_TRIGGERS");
+
+  // const transactionId: number = req.body.transactionId;
+  // const username: string = req.body.username;
+  // const stockSymbol: string = req.body.stockSymbol;
+
+  // Test Data
+  const transactionId: number = 17;
+  const username: string = "test1";
+  const stockSymbol: string = "SYM";
+
+  await userCommandLogs.insertOne({
+    transactionId: transactionId,
+    timestamp: new Date(),
+    server: "transaction-server",
+    command: "CANCEL_SET_BUY",
+    username: username,
+    stockSymbol: stockSymbol
+  });
+
+  const userExist = await userExists(username);
+
+  if(!userExist) {
+    await errorLogs.insertOne({
+      transactionId: 1,
+      timestamp: new Date(),
+      server: "transaction-server",
+      errorMessage: "User does not exist",
+      command: "CANCEL_SET_BUY",
+      username: username,
+      stockSymbol: stockSymbol
+    });
+
+    return res.send(`Error: User ${username} does not exist`).status(500);
+  }
+
+  const userTrigger = await triggers.findOne({username: username, stockSymbol: stockSymbol});
+
+  if(!userTrigger) {
+    await errorLogs.insertOne({
+      transactionId: 1,
+      timestamp: new Date(),
+      server: "transaction-server",
+      errorMessage: "User does not have set buy for this stock",
+      command: "CANCEL_SET_BUY",
+      username: username,
+      stockSymbol: stockSymbol
+    });
+
+    return res.send(`Error: User ${username} does not have set buy issued for this stock`).status(500);
+  }
+
+  const transPrice = Number((userTrigger.amount * userTrigger.triggerPrice).toFixed(2));
+
+  try {
+    await triggers.deleteOne({
+      username: username,
+      stockSymbol: stockSymbol
+    });
+
+    // Release the reserved amount for the trigger transaction
+    await users.updateOne({
+      username: username
+    },
+    {
+      $inc:
+      {
+        balance: transPrice,
+        lockedBalance: -transPrice
+      }
+    });
+
+    await accountTransactionLogs.insertOne({
+      transactionId: 1,
+      timestamp: new Date(),
+      server: "transaction-server",
+      command: "CANCEL_SET_BUY",
+      username: username,
+      stockSymbol: stockSymbol,
+      numStocks: userTrigger.amount,
+      price: userTrigger.triggerPrice
+    });
+
+    res.send(`Successfully cancelled set buy`).status(200);
+  } catch(e:any) {
+    await errorLogs.insertOne({
+      transactionId: 1,
+      timestamp: new Date(),
+      server: "transaction-server",
+      errorMessage: e.message,
+      command: "CANCEL_SET_BUY",
+      username: username,
+      stockSymbol: stockSymbol
+    });
+    
+    res.send(`Error: Failed to cancel set buy for ${username}`).status(500);
+  }
+});
+
+app.post('/setSellAmount', async (req, res) => {
+  const db = await connectToDatabase();
+  if(!db) {
+    res.send("Error: Database connection failed").status(500);
+    return;
+  }
+  let userCommandLogs = await db.collection("USER_COMMAND_LOGS");
+  let accountTransactionLogs = await db.collection("ACCOUNT_TRANSACTION_LOGS");
+  let errorLogs = await db.collection("ERROR_LOGS");
+  let users = await db.collection("USERS");
+  let triggers = await db.collection("SELL_TRIGGERS");
+
+  // const transactionId: number = req.body.transactionId;
+  // const username: string = req.body.username;
+  // const stockSymbol: string = req.body.stockSymbol;
+  // const amount: number = req.body.amount;
+
+  // Test Data
+  const transactionId: number = 18;
+  const username: string = "test1";
+  const stockSymbol: string = "SYM";
+  const amount: number = 10;
+
+  await userCommandLogs.insertOne({
+    transactionId: transactionId,
+    timestamp: new Date(),
+    server: "transaction-server",
+    command: "SET_SELL_AMOUNT",
+    username: username,
+    stockSymbol: stockSymbol,
+    numStocks: amount
+  });
+
+  const userExist = await userExists(username);
+
+  if(!userExist) {
+    await errorLogs.insertOne({
+      transactionId: 1,
+      timestamp: new Date(),
+      server: "transaction-server",
+      errorMessage: "User does not exist",
+      command: "SET_SELL_AMOUNT",
+      username: username,
+      stockSymbol: stockSymbol
+    });
+
+    return res.send(`Error: User ${username} does not exist`).status(500);
+  }
+
+  const user = await users.findOne({username: username, stocks:{$elemMatch:{stockSymbol: stockSymbol, numStocks:{ $gt: 0}}}});
+
+  if(user){
+    const userStocks = user.stocks.find((stock: any) => stock.stockSymbol === stockSymbol).amount;
+
+    if(userStocks < amount) {
+      await errorLogs.insertOne({
+        transactionId: 1,
+        timestamp: new Date(),
+        server: "transaction-server",
+        errorMessage: "User does not have enough stocks",
+        command: "SET_SELL_AMOUNT",
+        username: username,
+        stockSymbol: stockSymbol
+      });
+
+      return res.send(`Error: User ${username} does not have enough stocks`).status(500);
+    }
+
+    let stockIndex = -1;
+    if(user.reservedStocks) {
+      stockIndex = user.reservedStocks.findIndex((stock:Stock) => stock.stockSymbol === stockSymbol); 
+    }
+
+    let update = {};
+
+    if(stockIndex === -1) {
+      update = {
+        $push: {
+          reservedStocks: {
+            stockSymbol: stockSymbol,
+            numStocks: amount
+          }
+        },
+        $inc: {
+          "stocks.$.numStocks": -amount
+        }
+      }
+    } else {
+      update = {
+        $inc: {
+          "reservedStocks.$.numStocks": amount,
+          "stocks.$.numStocks": -amount
+        }
+      }
+    }
+
+    try {
+      // Create/update sell trigger
+      await triggers.updateOne({
+        username: username,
+        stockSymbol: stockSymbol
+      },
+      {
+        $inc:
+        {
+          amount: amount
+        },
+        $set:
+        {
+          triggerPrice: 0,
+          set: false
+        }
+      },
+      {upsert: true});
+  
+      
+      // Reserve the amount for the trigger transaction
+      await users.updateOne({
+        username: username,
+        "stocks.stockSymbol": stockSymbol
+      },
+      update,
+      {upsert: true}
+      );
+  
+      await accountTransactionLogs.insertOne({
+        transactionId: 1,
+        timestamp: new Date(),
+        server: "transaction-server",
+        command: "SET_SELL_AMOUNT",
+        username: username,
+        stockSymbol: stockSymbol,
+        numStocks: amount,
+      });
+  
+      res.send(`Successfully set sell amount`).status(200);
+    } catch(e:any) {
+      await errorLogs.insertOne({
+        transactionId: 1,
+        timestamp: new Date(),
+        server: "transaction-server",
+        errorMessage: e.message,
+        command: "SET_SELL_AMOUNT",
+        username: username,
+        stockSymbol: stockSymbol
+      });
+      console.log(e.message)
+      res.send(`Error: Failed to set sell amount for ${username}`).status(500);
+    }
+  } else {
+    await errorLogs.insertOne({
+      transactionId: 1,
+      timestamp: new Date(),
+      server: "transaction-server",
+      errorMessage: "User does not own stock",
+      command: "SET_SELL_AMOUNT",
+      username: username,
+      stockSymbol: stockSymbol
+    });
+
+    return res.send(`Error: User ${username} does not own stock`).status(500);
+  }
+});
+
+app.post('/setSellTrigger', async (req, res) => {
+  const db = await connectToDatabase();
+  if(!db) {
+    res.send("Error: Database connection failed").status(500);
+    return;
+  }
+  let userCommandLogs = await db.collection("USER_COMMAND_LOGS");
+  let accountTransactionLogs = await db.collection("ACCOUNT_TRANSACTION_LOGS");
+  let errorLogs = await db.collection("ERROR_LOGS");
+  let users = await db.collection("USERS");
+  let triggers = await db.collection("SELL_TRIGGERS");
+  
+  // const transactionId: number = req.body.transactionId;
+  // const username: string = req.body.username;
+  // const stockSymbol: string = req.body.stockSymbol;
+  // const triggerPrice: number = req.body.triggerPrice;
+
+  // Test Data
+  const transactionId: number = 19;
+  const username: string = "test1";
+  const stockSymbol: string = "SYM";
+  const triggerPrice: number = 10;
+
+  await userCommandLogs.insertOne({
+    transactionId: transactionId,
+    timestamp: new Date(),
+    server: "transaction-server",
+    command: "SET_SELL_TRIGGER",
+    username: username,
+    stockSymbol: stockSymbol,
+    triggerPrice: triggerPrice
+  });
+
+  const userExist = await userExists(username);
+
+  if(!userExist) {
+    await errorLogs.insertOne({
+      transactionId: 1,
+      timestamp: new Date(),
+      server: "transaction-server",
+      errorMessage: "User does not exist",
+      command: "SET_SELL_TRIGGER",
+      username: username,
+      stockSymbol: stockSymbol
+    });
+
+    return res.send(`Error: User ${username} does not exist`).status(500);
+  }
+
+  const trigger = await triggers.findOne({
+    username: username,
+    stockSymbol: stockSymbol
+  });
+
+  if(!trigger) {
+    await errorLogs.insertOne({
+      transactionId: 1,
+      timestamp: new Date(),
+      server: "transaction-server",
+      errorMessage: "User does not have a sell amount set",
+      command: "SET_SELL_TRIGGER",
+      username: username,
+      stockSymbol: stockSymbol
+    });
+
+    return res.send(`Error: User ${username} does not have a sell amount set`).status(500);
+  }
+
+  try {
+    await triggers.updateOne({ 
+      username: username,
+      stockSymbol: stockSymbol
+    },
+    {
+      $set:
+      {
+        triggerPrice: triggerPrice,
+        set: true
+      }
+    });
+
+    await accountTransactionLogs.insertOne({
+      transactionId: 1,
+      timestamp: new Date(),
+      server: "transaction-server",
+      command: "SET_SELL_TRIGGER",
+      username: username,
+      stockSymbol: stockSymbol,
+      triggerPrice: triggerPrice
+    });
+
+    res.send(`Successfully set sell trigger`).status(200);
+  } catch(e:any) {
+    await errorLogs.insertOne({
+      transactionId: 1,
+      timestamp: new Date(),
+      server: "transaction-server",
+      errorMessage: e.message,
+      command: "SET_SELL_TRIGGER",
+      username: username,
+      stockSymbol: stockSymbol
+    });
+
+    res.send(`Error: Failed to set sell trigger for ${username}`).status(500);
+  }
+});
+
+app.post('/cancelSetSell', async (req, res) => {
+  const db = await connectToDatabase();
+  if(!db) {
+    res.send("Error: Database connection failed").status(500);
+    return;
+  }
+  let userCommandLogs = await db.collection("USER_COMMAND_LOGS");
+  let accountTransactionLogs = await db.collection("ACCOUNT_TRANSACTION_LOGS");
+  let errorLogs = await db.collection("ERROR_LOGS");
+  let users = await db.collection("USERS");
+  let triggers = await db.collection("SELL_TRIGGERS");
+
+  // const transactionId: number = req.body.transactionId;
+  // const username: string = req.body.username;
+  // const stockSymbol: string = req.body.stockSymbol;
+
+  // Test Data
+  const transactionId: number = 19;
+  const username: string = "test1";
+  const stockSymbol: string = "SYM";
+
+  await userCommandLogs.insertOne({
+    transactionId: transactionId,
+    timestamp: new Date(),
+    server: "transaction-server",
+    command: "CANCEL_SELL",
+    username: username,
+    stockSymbol: stockSymbol
+  });
+
+  const userExist = await userExists(username);
+
+  if(!userExist) {
+    await errorLogs.insertOne({
+      transactionId: 1,
+      timestamp: new Date(),
+      server: "transaction-server",
+      errorMessage: "User does not exist",
+      command: "CANCEL_SELL",
+      username: username,
+      stockSymbol: stockSymbol
+    });
+
+    return res.send(`Error: User ${username} does not exist`).status(500);
+  }
+
+  const trigger = await triggers.findOne({
+    username: username,
+    stockSymbol: stockSymbol
+  });
+
+  const stockAmount = trigger && trigger.amount;
+
+  if(!trigger) {
+    await errorLogs.insertOne({
+      transactionId: 1,
+      timestamp: new Date(),
+      server: "transaction-server",
+      errorMessage: "User does not have a sell trigger for this stock",
+      command: "CANCEL_SELL",
+      username: username,
+      stockSymbol: stockSymbol
+    });
+
+    return res.send(`Error: User ${username} does not have a sell trigger set for this stock`).status(500);
+  }
+
+  try {
+    // Cancel sell trigger
+    await triggers.deleteOne({
+      username: username,
+      stockSymbol: stockSymbol
+    });
+
+    // Release the stocks from the user's account
+    await users.updateOne({
+      username: username,
+      "stocks.stockSymbol": stockSymbol,
+    },
+    {
+      $inc: {
+        "reservedStocks.$.numStocks": -stockAmount,
+        "stocks.$.numStocks": stockAmount
+      }
+    });
+
+
+    await accountTransactionLogs.insertOne({
+      transactionId: 1,
+      timestamp: new Date(),
+      server: "transaction-server",
+      command: "CANCEL_SELL",
+      username: username,
+      stockSymbol: stockSymbol
+    });
+
+    res.send(`Successfully cancelled sell trigger`).status(200);
+  } catch(e:any) {
+    await errorLogs.insertOne({
+      transactionId: 1,
+      timestamp: new Date(),
+      server: "transaction-server",
+      errorMessage: e.message,
+      command: "CANCEL_SELL",
+      username: username,
+      stockSymbol: stockSymbol
+    });
+
+    res.send(`Error: Failed to cancel sell trigger for ${username}`).status(500);
+  }
+});
+
+
+
 
 
 
