@@ -9,6 +9,7 @@ app.use(cors());
 
 app.get('/', (req, res) => {
     res.json("main page");
+    res.send('Hello World!')
   });
 
 interface AddMoney {
@@ -18,12 +19,14 @@ interface AddMoney {
 
 // Add money to user account
 app.post('/add', (req, res) => {
+    console.log("/add success")
     const addMoney :AddMoney = {
         // userId: req.body.userId,
         // amount: req.body.amount,
         userId: 'testUser',
         amount: 16.00,
     } 
+    
 
     // make a request to the account service
     axios.post('http://localhost:3000/add', addMoney)

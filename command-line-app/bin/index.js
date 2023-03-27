@@ -1,8 +1,5 @@
 #!/usr/bin/env node
 
-// first run npm install -g
-// then run CLI with "send_command file.txt"
-
 const axios = require("axios").default;
 
 class Command {
@@ -35,6 +32,7 @@ function add(command) {
       console.log(error);
     });
 }
+
 
 function quote(command) {
   console.log("in quote function");
