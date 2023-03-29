@@ -6,17 +6,16 @@ export interface Stock {
 
 export interface AutoTransaction {
     symbol: string;
-    price: number;
-    quantity: number;
-    trigger: number;
+    amount: number;
+    triggerPrice: number;
 }
 
 export interface User {
     username: string;
-    funds: number;
+    balance: number;
+    reservedBalance?: number;
     stocks?: Stock[];
-    autoBuy?: AutoTransaction[];
-    autoSell?: AutoTransaction[];
+    reservedStocks?: Stock[];
     uncommittedBuys?: UncommittedTransaction[];
     uncommittedSells?: UncommittedTransaction[];
 }
