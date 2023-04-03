@@ -5,8 +5,6 @@ const connectionString = "mongodb://DBContainer:27017";
 
 const connectToDatabase = async () => {
   const client = new MongoClient(connectionString);
-  
-  
   let conn;
   try {
     conn = await client.connect();

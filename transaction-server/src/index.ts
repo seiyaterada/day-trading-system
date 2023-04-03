@@ -8,7 +8,7 @@ import redisClient from "../db/redisClient";
 import {job} from "./triggerJob";
 // import routes from "./routes.mjs";
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 const app = express();
 
 app.use(cors());
@@ -18,7 +18,7 @@ app.use(express.json());
   await redisClient.connect();
 })();
 
-// Start the trigger job
+//Start the trigger job
 job.start();
 
 
