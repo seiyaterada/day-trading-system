@@ -4,6 +4,8 @@ import {connectToDatabase} from "../db/connection";
 import { ErrorType, AccountTransactionType, User, Stock } from "./interfaces";
 import { userExists } from "./userExists";
 import { getQuote } from "./quote";
+import { prettyPrintJson } from 'pretty-print-json';
+
 // import routes from "./routes.mjs";
 
 const PORT = process.env.PORT || 3000;
@@ -11,6 +13,40 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+
+async function checkUser(user :User){
+  const db = await connectToDatabase();
+  if(!db) { 
+    console.log("Error: Database connection failed")
+    return
+  }
+  let users = await db.collection("USERS");
+  
+  const userExist = await userExists(user.username);
+  console.log("USER EXISTS", userExist)
+
+  if (!userExist){
+    console.log("User does not exist");
+    await users.insertOne({
+      username: user.username,
+      funds: user.funds
+    })
+  }
+  
+}
+
+async function viewUserContents(): Promise<void> {
+  const db = await connectToDatabase();
+  if(!db) { 
+    console.log("Error: Database connection failed")
+    return
+  }
+  let users = await db.collection('USERS');
+  let cursor = await users.find();
+  await cursor.forEach((doc) => {
+    console.log(doc);
+  });
+}
 // await db.deleteCollection("LOGS");
 // await db.deleteCollection("USERS");
 
@@ -22,6 +58,7 @@ app.use(express.json());
 // let debugLogs = await db.collection("DEBUG LOGS");
 
 app.post('/add', async (req, res) => {
+  console.log("Recieved ADD request");
   const db = await connectToDatabase();
   if(!db) { 
     res.send("Error: Database connection failed").status(500);
@@ -31,6 +68,10 @@ app.post('/add', async (req, res) => {
   let accountTransactionLogs = await db.collection("ACCOUNT_TRANSACTION_LOGS");
   let errorLogs = await db.collection("ERROR _LOGS");
   let users = await db.collection("USERS");
+
+  //var usersString = prettyPrintJson.toHtml(users);
+  
+  console.log("USERS LIST: ", users);
 
   const username = 'test1'
   const transactionId: number = req.body.transactionId;
@@ -90,15 +131,27 @@ app.post('/quote', async(req, res) => {
     res.send("Error: Database connection failed").status(500);
     return;
   }
+
+  
   let userCommandLogs = await db.collection("USER_COMMAND_LOGS");
   let accountTransactionLogs = await db.collection("ACCOUNT_TRANSACTION_LOGS");
   let errorLogs = await db.collection("ERROR_LOGS");
   let users = await db.collection("USERS");
 
   const transactionId: number = req.body.transactionId;
+  console.log("transactionID: ", transactionId);
   const username: string = req.body.username;
+  console.log("USERNAME: ", username);
   const stockSymbol: string = req.body.stockSymbol;
   const funds: number = req.body.funds;
+  const user: User = {
+    username: username,
+    funds: 1000
+  }
+  //await users.deleteOne({ username: 'oY01WVirLr' });
+  checkUser(user);
+  viewUserContents();
+  
 
   try {
     await userCommandLogs.insertOne({
@@ -112,6 +165,7 @@ app.post('/quote', async(req, res) => {
     });
   
     const userExist = await userExists(username);
+    console.log("USER EXISTS", userExist)
   
     if (userExist) {
       const quote = await getQuote(stockSymbol, username);

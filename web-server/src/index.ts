@@ -24,6 +24,7 @@ app.post('/add', (req, res) => {
         userId: 'testUser',
         amount: 16.00,
     } 
+    console.log("Recieved add request!");
 
     // make a request to the account service
     axios.post('http://localhost:3000/add', addMoney)
@@ -32,7 +33,8 @@ app.post('/add', (req, res) => {
             res.status(200).json(response.data);
         })
         .catch((error) => {
-            console.log(error);
+            console.log("$$$Error with web server$$$");
+            //console.log(error);
             res.status(500).json(error);
         });
     // res.status(200).json("money added");
@@ -44,7 +46,7 @@ app.post('/quote', (req, res) => {
         userId: req.body.userId,
         amount: req.body.amount,
     } 
-
+    console.log("Recieved quote request!");
     res.status(200).json("money added");
 });
 
@@ -55,6 +57,7 @@ app.post('/buy', (req, res) => {
         stock: req.body.stock,
         amount: req.body.amount,
     }
+    console.log("Recieved buy request!");
     // make a request to the stock service
     axios.post('http://localhost:3000/buy', buy)
         .then((response) => {
@@ -62,7 +65,7 @@ app.post('/buy', (req, res) => {
             res.status(200).json(response.data);
         })
         .catch((error) => {
-            console.log(error);
+            //console.log(error);
             res.status(500).json(error);
         });
     // res.status(200).json("money added");
@@ -73,6 +76,8 @@ app.post('/commitBuy', (req, res) => {
     const userCommit :User = {
         userId: req.body.userId,
     } 
+
+    console.log("Recieved commitBuy request!");
     // make a request to the account service
     axios.post('http://localhost:3000/commitBuy', userCommit)
         .then((response) => {
@@ -80,7 +85,7 @@ app.post('/commitBuy', (req, res) => {
             res.status(200).json(response.data);
         })
         .catch((error) => {
-            console.log(error);
+            //console.log(error);
             res.status(500).json(error);
         });
     // res.status(200).json("money added");
@@ -91,6 +96,8 @@ app.post('/cancelBuy', (req, res) => {
     const userCancel :User = {
         userId: req.body.userId,
     } 
+
+    console.log("Recieved cancelBuy request!");
     // make a request to the account service
     axios.post('http://localhost:3000/cancelBuy', userCancel)
         .then((response) => {
@@ -98,7 +105,7 @@ app.post('/cancelBuy', (req, res) => {
             res.status(200).json(response.data);
         })
         .catch((error) => {
-            console.log(error);
+            //console.log(error);
             res.status(500).json(error);
         });
     // res.status(200).json("money added");
@@ -111,6 +118,8 @@ app.post('/sell', (req, res) => {
         amount: req.body.amount,
     } 
 
+    console.log("Recieved sell request!");
+
     res.status(200).json("money added");
 });
 
@@ -121,6 +130,8 @@ app.post('/commitSell', (req, res) => {
         stock: req.body.stock,
         amount: req.body.amount,
     } 
+
+    console.log("Recieved commitSell request!");
     // make a request to the account service
     axios.post('http://localhost:3000/commitSell', sell)
         .then((response) => {
@@ -128,7 +139,7 @@ app.post('/commitSell', (req, res) => {
             res.status(200).json(response.data);
         })
         .catch((error) => {
-            console.log(error);
+            //console.log(error);
             res.status(500).json(error);
         });
     // res.status(200).json("money added");
@@ -139,6 +150,8 @@ app.post('/cancelSell', (req, res) => {
     const userCancel :User = {
         userId: req.body.userId,
     } 
+
+    console.log("Recieved cancelSell request!");
     // make a request to the account service
     axios.post('http://localhost:3000/cancelSell', userCancel)
         .then((response) => {
@@ -146,7 +159,7 @@ app.post('/cancelSell', (req, res) => {
             res.status(200).json(response.data);
         })
         .catch((error) => {
-            console.log(error);
+            //console.log(error);
             res.status(500).json(error);
         });
     // res.status(200).json("money added");
@@ -160,6 +173,8 @@ app.post('/setBuyAmount', (req, res) => {
         stock: req.body.stock,
         amount: req.body.amount,
     } 
+
+    console.log("Recieved setBuyAmount request!");
     // make a request to the account service
     axios.post('http://localhost:3000/setBuyAmount', setBuy)
         .then((response) => {
@@ -167,7 +182,7 @@ app.post('/setBuyAmount', (req, res) => {
             res.status(200).json(response.data);
         })
         .catch((error) => {
-            console.log(error);
+            //console.log(error);
             res.status(500).json(error);
         });
     // res.status(200).json("money added");
@@ -179,6 +194,8 @@ app.post('/cancelSetBuy', (req, res) => {
         userId: req.body.userId,
         stock: req.body.stock,
     } 
+
+    console.log("Recieved cancelSetBuy request!");
     // make a request to the account service
     axios.post('http://localhost:3000/cancelSetBuy', cancelBuy)
         .then((response) => {
@@ -186,7 +203,7 @@ app.post('/cancelSetBuy', (req, res) => {
             res.status(200).json(response.data);
         })
         .catch((error) => {
-            console.log(error);
+            //console.log(error);
             res.status(500).json(error);
         });
     // res.status(200).json("money added");
@@ -199,6 +216,8 @@ app.post('/setBuyTrigger', (req, res) => {
         stock: req.body.stock,
         amount: req.body.amount,
     } 
+
+    console.log("Recieved setBuyTrigger request!");
     // make a request to the account service
     axios.post('http://localhost:3000/setBuyTrigger', buyTrigger)
         .then((response) => {
@@ -206,7 +225,7 @@ app.post('/setBuyTrigger', (req, res) => {
             res.status(200).json(response.data);
         })
         .catch((error) => {
-            console.log(error);
+            //console.log(error);
             res.status(500).json(error);
         });
     // res.status(200).json("money added");
@@ -218,6 +237,7 @@ app.post('/cancelSetBuyTrigger', (req, res) => {
         userId: req.body.userId,
         stock: req.body.stock,
     }
+    console.log("Recieved cancelSetBuyTrigger request!");
     // make a request to the account service
     axios.post('http://localhost:3000/cancelSetBuyTrigger', cancelBuy)
         .then((response) => {
@@ -225,7 +245,7 @@ app.post('/cancelSetBuyTrigger', (req, res) => {
             res.status(200).json(response.data);
         })
         .catch((error) => {
-            console.log(error);
+            //console.log(error);
             res.status(500).json(error);
         });
 });
@@ -237,6 +257,8 @@ app.post('/setSellAmount', (req, res) => {
         stock: req.body.stock,
         amount: req.body.amount,
     } 
+
+    console.log("Recieved setSellAmount request!");
     // make a request to the account service
     axios.post('http://localhost:3000/setSellAmount', setSell)
         .then((response) => {
@@ -244,7 +266,7 @@ app.post('/setSellAmount', (req, res) => {
             res.status(200).json(response.data);
         })
         .catch((error) => {
-            console.log(error);
+            //console.log(error);
             res.status(500).json(error);
         });
     // res.status(200).json("money added");
@@ -257,6 +279,8 @@ app.post('/setSellTrigger', (req, res) => {
         stock: req.body.stock,
         amount: req.body.amount,
     } 
+
+    console.log("Recieved setSellTrigger request!");
     // make a request to the account service
     axios.post('http://localhost:3000/setSellTrigger', sellTrigger)
         .then((response) => {
@@ -264,7 +288,7 @@ app.post('/setSellTrigger', (req, res) => {
             res.status(200).json(response.data);
         })
         .catch((error) => {
-            console.log(error);
+            //console.log(error);
             res.status(500).json(error);
         });
     // res.status(200).json("money added");
@@ -277,6 +301,8 @@ app.post('/cancelSetSell', (req, res) => {
         stock: req.body.stock,
         amount: req.body.amount,
     } 
+
+    console.log("Recieved cancelSetSell request!");
     // make a request to the account service
     axios.post('http://localhost:3000/cancelSetSell', cancel)
         .then((response) => {
@@ -284,7 +310,7 @@ app.post('/cancelSetSell', (req, res) => {
             res.status(200).json(response.data);
         })
         .catch((error) => {
-            console.log(error);
+            //console.log(error);
             res.status(500).json(error);
         });
     // res.status(200).json("money added");
@@ -295,6 +321,8 @@ app.post('/dumplog', (req, res) => {
     const user :User = {
         userId: req.body.userId,
     } 
+
+    console.log("Recieved dumplog request!");
     // make a request to the account service
     axios.post('http://localhost:3000/dumplog', user)
         .then((response) => {
@@ -302,7 +330,7 @@ app.post('/dumplog', (req, res) => {
             res.status(200).json(response.data);
         })
         .catch((error) => {
-            console.log(error);
+            //console.log(error);
             res.status(500).json(error);
         });
     // res.status(200).json("money added");
@@ -315,6 +343,7 @@ app.post('/displaySummary', (req, res) => {
         userId: req.body.userId,
         amount: req.body.amount,
     } 
+    console.log("Recieved displaySummary request!");
     // make a request to the account service
     axios.post('http://localhost:3000/displaySummary', addMoney)
         .then((response) => {
@@ -322,7 +351,7 @@ app.post('/displaySummary', (req, res) => {
             res.status(200).json(response.data);
         })
         .catch((error) => {
-            console.log(error);
+            //console.log(error);
             res.status(500).json(error);
         });
     // res.status(200).json("money added");
