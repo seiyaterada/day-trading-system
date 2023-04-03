@@ -1339,7 +1339,7 @@ app.post('/setSellTrigger', async (req, res) => {
   const username: string = "test1";
   const stockSymbol: string = "SYM";
   const triggerPrice: number = 10;
-
+  
   await userCommandLogs.insertOne({
     transactionId: transactionId,
     timestamp: new Date(),
@@ -1535,6 +1535,47 @@ app.post('/cancelSetSell', async (req, res) => {
     res.send(`Error: Failed to cancel sell trigger for ${username}`).status(500);
   }
 });
+
+app.post('/dumplog', async (req, res) => {
+  const db = await connectToDatabase();
+  if(!db) {
+    res.send("Error: Database connection failed").status(500);
+    return;
+  }
+
+  let userCommandLogs = await db.collection("USER_COMMAND_LOGS");
+  let accountTransactionLogs = await db.collection("ACCOUNT_TRANSACTION_LOGS");
+  let errorLogs = await db.collection("ERROR_LOGS");
+  let users = await db.collection("USERS");
+  let triggers = await db.collection("DUMPLOG");
+
+   // Test Data
+   const transactionId: number = 19;
+   const username: string = "test1";
+   const stockSymbol: string = "SYM";
+   const triggerPrice: number = 10;
+
+   const userExist = await userExists(username);
+
+   if(!userExist) {
+    await userCommandLogs.insertOne({
+      transactionId: transactionId,
+      timestamp: new Date(),
+      server: "transaction-server",
+      command: "DUMPLOG",
+      username: username,
+      stockSymbol: stockSymbol,
+      triggerPrice: triggerPrice
+    });
+    return res.send(`Error: User ${username} does not exist`).status(500);
+  }
+
+  const trigger = await triggers.findOne({
+    username: username,
+    stockSymbol: stockSymbol
+  });
+  
+})
 
 
 

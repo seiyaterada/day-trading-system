@@ -2,13 +2,14 @@ import redisClient from "../db/redisClient";
 import {connectToDatabase} from "../db/connection";
 import {CronJob} from "cron";
 import { getQuote } from "./quote";
+import { Collection } from "mongodb";
 
-let userCommandLogs
-let errorLogs
-let accountTransactionLogs
-let users
-let buyTriggerDB
-let sellTriggerDB
+let userCommandLogs:Collection
+let errorLogs:Collection
+let accountTransactionLogs:Collection
+let users:Collection
+let buyTriggerDB:Collection
+let sellTriggerDB:Collection
 
 (async () => {
     const db = await connectToDatabase();
@@ -40,7 +41,7 @@ export const job = new CronJob('0 * * * * *', async () => {
 				try{
 					const user = users.findOne({username: buyTrigger.username, "stocks.symbol": buyTrigger.stockSymbol});
 					let update = {}
-					if(user) {
+					if(await user) {
 						update = {
 							$inc: {
 								"stocks.$.amount": buyTrigger.amount,
