@@ -4,7 +4,7 @@
 // then run CLI with "send_command file.txt"
 
 const axios = require("axios").default;
-const url = "http://localhost:3001"
+const url = "http://localhost:3000"
 
 class Command {
   transactionId;
@@ -433,7 +433,7 @@ function main() {
   const fs = require("fs");
   var command = "";
   var data = fs.readFileSync("user1.txt").toString().split("\n");
-  for (let i = 0; i < 2; i++) {
+  for (let i = 0; i < data.length; i++) {
     //console.log(data[line])
     data[i] = data[i].toString().replace(/[\[\]']+/g,'');
     command = data[i].split(/[ ,]+/);
