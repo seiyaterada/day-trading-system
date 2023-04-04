@@ -8,7 +8,7 @@ import redisClient from "../db/redisClient";
 import {job} from "./triggerJob";
 // import routes from "./routes.mjs";
 
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3000;
 const app = express();
 
 app.use(cors());
@@ -36,6 +36,7 @@ app.post('/redis', async (req, res) => {
 
 
 app.post('/add', async (req, res) => {
+  console.log("ADD REQUEST RECIEvED");
   const db = await connectToDatabase();
   if(!db) { 
     res.send("Error: Database connection failed").status(500);
