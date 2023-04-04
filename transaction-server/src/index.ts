@@ -6,9 +6,12 @@ import { userExists } from "./userExists";
 import { getQuote } from "./quote";
 import redisClient from "../db/redisClient";
 import {job} from "./triggerJob";
+import { saveAs } from "file-saver";
+import {Blob} from 'node:buffer';
+// import { Blob } from 'blob';
 // import routes from "./routes.mjs";
 
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3000;
 const app = express();
 
 app.use(cors());
@@ -1536,18 +1539,142 @@ app.post('/cancelSetSell', async (req, res) => {
   }
 });
 
+app.post('/dumplog' , async (req, res) => {
+  const db = await connectToDatabase();
+  if(!db) {
+    res.send("Error: Database connection failed").status(500);
+    return;
+  }
+  let userCommandLogs = await db.collection("USER_COMMAND_LOGS");
+  let accountTransactionLogs = await db.collection("ACCOUNT_TRANSACTION_LOGS");
+  let errorLogs = await db.collection("ERROR_LOGS");
 
+  const transactionId: number = req.body.transactionId;
+  const username: string = req.body.username;
+  const filename: string = req.body.filename;
 
+  await userCommandLogs.insertOne({
+    transactionId: transactionId,
+    timestamp: new Date(),
+    server: "transaction-server",
+    command: "DUMPLOG",
+    username: username,
+    filename: filename ?? ""
+  });
 
+  if(username) {
+    const userExist = await userExists(username);
 
+    if(!userExist) {
+      await errorLogs.insertOne({
+        transactionId: 1,
+        timestamp: new Date(),
+        server: "transaction-server",
+        errorMessage: "User does not exist",
+        command: "DUMPLOG",
+        username: username,
+        filename: filename ?? ""
+      });
 
-// Load the /posts routes
-// app.use("/", routes);
+      return res.send(`Error: User ${username} does not exist`).status(500);
+    }
 
-// Global error handling
-// app.use((err, _req, res, next) => {
-//   res.status(500).send("Uh oh! An unexpected error occured.")
-// })
+    const userLogs = await accountTransactionLogs.find({
+      username: username
+    })
+
+    const logs = JSON.stringify(userLogs);
+
+    const blob: Blob = new Blob([logs], { type: 'application/json' });
+    saveAs(blob, 'userdump.json');
+
+    res.send(`Successfully dumped logs for ${username}`).status(200);
+  } else {
+    const allLogs = await accountTransactionLogs.find({})
+
+    const logs = JSON.stringify(allLogs);
+
+    const blob: Blob = new Blob([logs], { type: 'application/json' });
+    saveAs(blob, 'alldump.json');
+
+    res.send(`Successfully dumped all logs`).status(200);
+  }
+});
+
+app.post('/displaySummary', async (req, res) => {
+  const db = await connectToDatabase();
+  if(!db) {
+    res.send("Error: Database connection failed").status(500);
+    return;
+  }
+  let userCommandLogs = await db.collection("USER_COMMAND_LOGS");
+  let accountTransactionLogs = await db.collection("ACCOUNT_TRANSACTION_LOGS");
+  let errorLogs = await db.collection("ERROR_LOGS");
+  let users = await db.collection("USERS");
+  
+  const transactionId: number = req.body.transactionId;
+  const username: string = req.body.username;
+
+  await userCommandLogs.insertOne({
+    transactionId: transactionId,
+    timestamp: new Date(),
+    server: "transaction-server",
+    command: "DISPLAY_SUMMARY",
+    username: username
+  });
+
+  const userExist = await userExists(username);
+
+  if(!userExist) {
+    await errorLogs.insertOne({
+      transactionId: 1,
+      timestamp: new Date(),
+      server: "transaction-server",
+      errorMessage: "User does not exist",
+      command: "DISPLAY_SUMMARY",
+      username: username
+    });
+
+    return res.send(`Error: User ${username} does not exist`).status(500);
+  }
+
+  const user = await users.findOne({
+    username: username
+  });
+
+  if (user) {
+    const stocks = user.stocks;
+    const reservedStocks = user.reservedStocks;
+  
+    const stockSummary = stocks.map((stock: any) => {
+      return {
+        stockSymbol: stock.stockSymbol,
+        numStocks: stock.numStocks
+      }
+    });
+  
+    const reservedStockSummary = reservedStocks.map((stock: any) => {
+      return {
+        stockSymbol: stock.stockSymbol,
+        numStocks: stock.numStocks
+      }
+    });
+  
+    const summary = {
+      username: username,
+      cash: user.cash,
+      stocks: stockSummary,
+      reservedStocks: reservedStockSummary
+    }
+  
+    const dump = JSON.stringify(summary);
+  
+    const blob: Blob = new Blob([dump], { type: 'application/json' });
+    saveAs(blob, 'summary.json');
+  
+    res.send(`Successfully dumped summary for ${username}`).status(200);
+  }
+});
 
 // start the Express server
 app.listen(PORT, () => {

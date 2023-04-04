@@ -5,15 +5,17 @@
 
 const axios = require("axios").default;
 const url = "http://localhost:3000"
+import { saveAs } from "file-saver";
+import {Blob} from 'node:buffer';
 
 class Command {
-  transactionId;
-  username;
-  amount;
-  stockSymbol;
-  filename;
+  transactionId: number | null;
+  username: string | null;
+  amount: number | null;
+  stockSymbol: string | null;
+  filename: string | null;
 
-  constructor(transactionId, username, amount, stockSymbol, filename) {
+  constructor(transactionId: number | null, username: string | null, amount: number | null, stockSymbol: string | null, filename: string | null) {
     this.transactionId = transactionId;
     this.username = username;
     this.amount = amount;
@@ -22,7 +24,7 @@ class Command {
   }
 }
 
-function add(command) {
+function add(command:string) {
   console.log("in add function");
 
   var username = command[2];
@@ -37,17 +39,17 @@ function add(command) {
   var functionURL = url + '/add';
   axios
     .post(functionURL, commandToSend)
-    .then((response) => {
+    .then((response:any) => {
       console.log(response.data);
       //res.status(200).json(response.data);
     })
-    .catch((error) => {
+    .catch((error:any) => {
       console.log("###error in CLI###");
       console.log(error);
     });
 }
 
-function quote(command) {
+function quote(command:string) {
   console.log("in quote function");
   var transactionId = parseInt(command[0]);
   var username = command[2];
@@ -61,17 +63,17 @@ function quote(command) {
 
   axios
     .post(functionURL, commandToSend)
-    .then((response) => {
+    .then((response:any) => {
       console.log(response.data);
       //res.status(200).json(response.data);
     })
-    .catch((error) => {
+    .catch((error:any) => {
       console.log("###error in CLI###");
       console.log(error);
     });
 }
 
-function sell(command) {
+function sell(command:string) {
   console.log("in sell function");
   var transactionId = parseInt(command[0]);
   var username = command[2];
@@ -86,17 +88,17 @@ function sell(command) {
   var functionURL = url + '/sell';
   axios
     .post(functionURL, commandToSend)
-    .then((response) => {
+    .then((response:any) => {
       console.log(response.data);
       //res.status(200).json(response.data);
     })
-    .catch((error) => {
+    .catch((error:any) => {
       console.log("###error in CLI###");
       console.log(error);
     });
 }
 
-function buy(command) {
+function buy(command:string) {
   console.log("in buy function");
   var transactionId = parseInt(command[0]);
   var username = command[2];
@@ -112,17 +114,17 @@ function buy(command) {
 
   axios
     .post(functionURL, commandToSend)
-    .then((response) => {
+    .then((response:any) => {
       console.log(response.data);
       //res.status(200).json(response.data);
     })
-    .catch((error) => {
+    .catch((error:any) => {
       console.log("###error in CLI###");
       console.log(error);
     });
 }
 
-function commitBuy(command) {
+function commitBuy(command:string) {
   console.log("in commitBuy function");
   var transactionId = parseInt(command[0]);
   var username = command[2];
@@ -134,17 +136,17 @@ function commitBuy(command) {
 
   axios
     .post(functionURL, commandToSend)
-    .then((response) => {
+    .then((response:any) => {
       console.log(response.data);
       //res.status(200).json(response.data);
     })
-    .catch((error) => {
+    .catch((error:any) => {
       console.log("###error in CLI###");
       console.log(error);
     });
 }
 
-function cancelBuy(command) {
+function cancelBuy(command:string) {
   console.log("in cancelBuy function");
   var transactionId = parseInt(command[0]);
   var username = command[2];
@@ -156,17 +158,17 @@ function cancelBuy(command) {
 
   axios
     .post(functionURL, commandToSend)
-    .then((response) => {
+    .then((response:any) => {
       console.log(response.data);
       //res.status(200).json(response.data);
     })
-    .catch((error) => {
+    .catch((error:any) => {
       console.log("###error in CLI###");
       console.log(error);
     });
 }
 
-function commitSell(command) {
+function commitSell(command:string) {
   console.log("in commitSell function");
   var transactionId = parseInt(command[0]);
   var username = command[2];
@@ -178,17 +180,17 @@ function commitSell(command) {
 
   axios
     .post(functionURL, commandToSend)
-    .then((response) => {
+    .then((response:any) => {
       console.log(response.data);
       //res.status(200).json(response.data);
     })
-    .catch((error) => {
+    .catch((error:any) => {
       console.log("###error in CLI###");
       console.log(error);
     });
 }
 
-function cancelSell(command) {
+function cancelSell(command:string) {
   console.log("in cancelSell function");
   var transactionId = parseInt(command[0]);
   var username = command[2];
@@ -200,17 +202,17 @@ function cancelSell(command) {
 
   axios
     .post(functionURL, commandToSend)
-    .then((response) => {
+    .then((response:any) => {
       console.log(response.data);
       //res.status(200).json(response.data);
     })
-    .catch((error) => {
+    .catch((error:any) => {
       console.log("###error in CLI###");
       console.log(error);
     });
 }
 
-function setBuyAmount(command) {
+function setBuyAmount(command:string) {
   console.log("in setBuyAmount function");
   var transactionId = parseInt(command[0]);
   var username = command[2];
@@ -225,17 +227,17 @@ function setBuyAmount(command) {
 
   axios
     .post(functionURL, commandToSend)
-    .then((response) => {
+    .then((response:any) => {
       console.log(response.data);
       //res.status(200).json(response.data);
     })
-    .catch((error) => {
+    .catch((error:any) => {
       console.log("###error in CLI###");
       console.log(error);
     });
 }
 
-function cancelSetBuy(command) {
+function cancelSetBuy(command:string) {
   console.log("in cancelSetBuy function");
   var transactionId = parseInt(command[0]);
   var username = command[2];
@@ -249,22 +251,22 @@ function cancelSetBuy(command) {
 
   axios
     .post(functionURL, commandToSend)
-    .then((response) => {
+    .then((response:any) => {
       console.log(response.data);
       //res.status(200).json(response.data);
     })
-    .catch((error) => {
+    .catch((error:any) => {
       console.log("###error in CLI###");
       console.log(error);
     });
 }
 
-function setBuyTrigger(command) {
+function setBuyTrigger(command:string) {
   console.log("in setBuyTrigger function");
   var transactionId = parseInt(command[0]);
   var username = command[2];
   var stockSymbol = command[3];
-  var amount = command[4];
+  var amount = parseFloat(command[4]);
 
   console.log("username: ", username);
   console.log("stockSymbol: ", stockSymbol);
@@ -275,17 +277,17 @@ function setBuyTrigger(command) {
 
   axios
     .post(functionURL, commandToSend)
-    .then((response) => {
+    .then((response:any) => {
       console.log(response.data);
       //res.status(200).json(response.data);
     })
-    .catch((error) => {
+    .catch((error:any) => {
       console.log("###error in CLI###");
       console.log(error);
     });
 }
 
-function setSellAmount(command) {
+function setSellAmount(command:string) {
   console.log("in setSellAmount function");
   var transactionId = parseInt(command[0]);
   var username = command[2];
@@ -301,17 +303,17 @@ function setSellAmount(command) {
 
   axios
     .post(functionURL, commandToSend)
-    .then((response) => {
+    .then((response:any) => {
       console.log(response.data);
       //res.status(200).json(response.data);
     })
-    .catch((error) => {
+    .catch((error:any) => {
       console.log("###error in CLI###");
       console.log(error);
     });
 }
 
-function setSellTrigger(command) {
+function setSellTrigger(command:string) {
   console.log("in setSellTrigger function");
   var transactionId = parseInt(command[0]);
   var username = command[2];
@@ -327,17 +329,17 @@ function setSellTrigger(command) {
 
   axios
     .post(functionURL, commandToSend)
-    .then((response) => {
+    .then((response:any) => {
       console.log(response.data);
       //res.status(200).json(response.data);
     })
-    .catch((error) => {
+    .catch((error:any) => {
       console.log("###error in CLI###");
       console.log(error);
     });
 }
 
-function cancelSetSell(command) {
+function cancelSetSell(command:string) {
   console.log("in cancelSetSell function");
   var transactionId = parseInt(command[0]);
   var username = command[2];
@@ -351,17 +353,17 @@ function cancelSetSell(command) {
 
   axios
     .post(functionURL, commandToSend)
-    .then((response) => {
+    .then((response:any) => {
       console.log(response.data);
       //res.status(200).json(response.data);
     })
-    .catch((error) => {
+    .catch((error:any) => {
       console.log("###error in CLI###");
       console.log(error);
     });
 }
 
-function userDumplog(command) {
+function userDumplog(command:string) {
   console.log("in userDumplog function");
   var transactionId = parseInt(command[0]);
   var username = command[2];
@@ -375,17 +377,17 @@ function userDumplog(command) {
 
   axios
     .post(functionURL, commandToSend)
-    .then((response) => {
+    .then((response:any) => {
       console.log(response.data);
       //res.status(200).json(response.data);
     })
-    .catch((error) => {
+    .catch((error:any) => {
       console.log("###error in CLI###");
       console.log(error);
     });
 }
 
-function totalDumplog(command) {
+function totalDumplog(command:string) {
   console.log("in totalDumplog function");
   var transactionId = parseInt(command[0]);
   var filename = command[2];
@@ -397,17 +399,17 @@ function totalDumplog(command) {
 
   axios
     .post(functionURL, commandToSend)
-    .then((response) => {
+    .then((response:any) => {
       console.log(response.data);
       //res.status(200).json(response.data);
     })
-    .catch((error) => {
+    .catch((error:any) => {
       console.log("###error in CLI###");
       console.log(error);
     });
 }
 
-function displaySummary(command) {
+function displaySummary(command:string) {
   console.log("in displaySummary function");
   var transactionId = parseInt(command[0]);
   var username = command[2];
@@ -419,11 +421,11 @@ function displaySummary(command) {
 
   axios
     .post(functionURL, commandToSend)
-    .then((response) => {
+    .then((response:any) => {
       console.log(response.data);
       //res.status(200).json(response.data);
     })
-    .catch((error) => {
+    .catch((error:any) => {
       console.log("###error in CLI###");
       console.log(error);
     });
@@ -432,7 +434,7 @@ function displaySummary(command) {
 function main() {
   const fs = require("fs");
   var command = "";
-  var data = fs.readFileSync("user1.txt").toString().split("\n");
+  var data = fs.readFileSync("C:/Users/seiya/Documents/Uni/Second Year/Seng 468/day-trading-system/command-line-app/bin/user1.txt").toString().split("\n");
   for (let i = 0; i < data.length; i++) {
     //console.log(data[line])
     data[i] = data[i].toString().replace(/[\[\]']+/g,'');
@@ -466,36 +468,37 @@ function main() {
         cancelSell(command);
         break;
       case "SET_BUY_AMOUNT":
-        //setBuyAmount(command);
+        setBuyAmount(command);
         break;
       case "CANCEL_SET_BUY":
-        //cancelSetBuy(command);
+        cancelSetBuy(command);
         break;
       case "SET_BUY_TRIGGER":
         setBuyTrigger(command);
         break;
       case "SET_SELL_AMOUNT":
-        //setSellAmount(command);
+        setSellAmount(command);
         break;
       case "SET_SELL_TRIGGER":
-        //setSellTrigger(command);
+        setSellTrigger(command);
         break;
       case "CANCEL_SET_SELL":
-        //cancelSetSell(command);
+        cancelSetSell(command);
         break;
       case "DUMPLOG":
         if (command.length < 4) {
-          //totalDumplog(command);
+          totalDumplog(command);
           break;
         } else {
-          //userDumplog(command);
+          userDumplog(command);
           break;
         }
       case "DISPLAY_SUMMARY":
-        //displaySummary(command);
+        displaySummary(command);
         break;
     }
   }
+  return 0;
 }
 
 main();
