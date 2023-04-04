@@ -26,6 +26,7 @@ import {
 } from '@chakra-ui/react';
 import StockList from '../stocklist/StockList';
 import Wallet from '../wallet/Wallet';
+import HomePage from '../mainpage/MainPage'
 
 
 const CentralPage = (props) => {
@@ -34,6 +35,7 @@ const CentralPage = (props) => {
         <Box textAlign="center" fontSize="xl">
           <Tabs>
             <TabList>
+              <Tab>Home</Tab>
               <Tab>Stocks</Tab>
               <Tab>Wallet</Tab>
               <Tab>My stocks</Tab>
@@ -42,6 +44,10 @@ const CentralPage = (props) => {
             </TabList>
   
             <TabPanels>
+            <TabPanel>
+                <p>Home</p>
+                <HomePage/>
+              </TabPanel>
               <TabPanel>
                 <p>Stocks</p>
                 <StockList/>
