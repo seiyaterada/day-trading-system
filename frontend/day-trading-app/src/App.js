@@ -26,11 +26,11 @@ import {
 } from '@chakra-ui/react';
 import { ColorModeSwitcher } from './ColorModeSwitcher';
 import { Logo } from './Logo';
-import CentralPage from './common/centralpage/CentralPage';
+import MainPage from './common/centralpage/CentralPage';
 
 function App() {
   return (
-    <CentralPage/>
+    <MainPage/>
   );
 }
 
