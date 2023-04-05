@@ -64,7 +64,7 @@ function Feature({ title, desc, ...rest }) {
     const [amountToAdd, setAmount] = useState(0);
 
     const addFunds = async event => {
-        event.preventDefault();git pu
+        event.preventDefault();
         console.log("amount to add: ", amountToAdd);
 
     };
