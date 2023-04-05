@@ -1,0 +1,22 @@
+{
+  "name": "command-line-app",
+  "version": "1.0.0",
+  "description": "",
+  "main": "bin/index.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "ts-node bin/index.ts"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/file-saver": "^2.0.5",
+    "@types/lodash": "^4.14.192",
+    "axios": "^1.3.4",
+    "file-saver": "^2.0.5",
+    "fs": "^0.0.1-security",
+    "lodash": "^4.17.21",
+    "ts-node": "^10.9.1",
+    "xml-js": "^1.6.11"
+  }
+}

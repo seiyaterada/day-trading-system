@@ -6,9 +6,11 @@ import { userExists } from "./userExists";
 import { getQuote } from "./quote";
 import redisClient from "../db/redisClient";
 import {job} from "./triggerJob";
+require('newrelic');
+// import { Blob } from 'blob';
 // import routes from "./routes.mjs";
 
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3000;
 const app = express();
 
 app.use(cors());
@@ -53,6 +55,7 @@ app.post('/add', async (req, res) => {
     balance: 1000
   }
   await userCommandLogs.insertOne({
+    type: "UserCommandType",
     transactionId: 1,  
     timestamp: new Date(), 
     server: "transaction-server", 
@@ -70,6 +73,7 @@ app.post('/add', async (req, res) => {
     );
   
     await accountTransactionLogs.insertOne({
+      type: "AccountTransactionType",
       transactionId: 1,
       timestamp: new Date(),
       server: "transaction-server",
@@ -82,6 +86,7 @@ app.post('/add', async (req, res) => {
   
   } catch(e:any) {
     await errorLogs.insertOne({
+      type: "ErrorEventType",
       transactionId: 1,
       timestamp: new Date(),
       server: "transaction-server",
@@ -116,6 +121,7 @@ app.post('/quote', async(req, res) => {
 
   try {
     await userCommandLogs.insertOne({
+      type: "UserCommandType",
       transactionId: transactionId, 
       timestamp: new Date(),  
       server: "transaction-server", 
@@ -133,6 +139,7 @@ app.post('/quote', async(req, res) => {
         res.send(quote).status(200);
       } else {
         await errorLogs.insertOne({
+          type: "ErrorEventType",
           transactionId: 1, 
           timestamp: new Date(), 
           server: "transaction-server", 
@@ -145,6 +152,7 @@ app.post('/quote', async(req, res) => {
       }
     } else {
       await errorLogs.insertOne({
+        type: "ErrorEventType",
         transactionId: 1, 
         timestamp: new Date(), 
         server: "transaction-server", 
@@ -157,6 +165,7 @@ app.post('/quote', async(req, res) => {
     }
   } catch (e:any) {
     await errorLogs.insertOne({
+      type: "ErrorEventType",
       transactionId: 1, 
       timestamp: new Date(), 
       server: "transaction-server", 
@@ -192,6 +201,7 @@ app.post('/buy', async (req, res) => {
   const amount: number = 100;
 
   await userCommandLogs.insertOne({
+    type: "UserCommandType",
     transactionId: transactionId, 
     timestamp: new Date(), 
     server: "transaction-server", 
@@ -203,7 +213,7 @@ app.post('/buy', async (req, res) => {
   const userExist = await userExists(username);
 
   if(!userExist) {
-    await errorLogs.insertOne({transactionId: 1, timestamp: new Date(), server: "transaction-server", errorMessage: "User does not exist", command: "BUY", username: username, stockSymbol: stockSymbol});
+    await errorLogs.insertOne({type: "ErrorEventType", transactionId: 1, timestamp: new Date(), server: "transaction-server", errorMessage: "User does not exist", command: "BUY", username: username, stockSymbol: stockSymbol});
     res.send(`Error: User ${username} does not exist`).status(500);
   } else {
     // Get quote from quote server
@@ -215,6 +225,7 @@ app.post('/buy', async (req, res) => {
 
     if(numStocks == 0 || user && user.balance < transPrice) {
       await errorLogs.insertOne({
+        type: "ErrorEventType",
         transactionId: 1, 
         timestamp: new Date(), 
         server: "transaction-server", 
@@ -242,6 +253,7 @@ app.post('/buy', async (req, res) => {
             }
           });
         await accountTransactionLogs.insertOne({
+          type: "AccountTransactionType",
           transactionId: 1, 
           timestamp: new Date(), 
           server: "transaction-server", 
@@ -253,6 +265,7 @@ app.post('/buy', async (req, res) => {
         res.send(`Successfully bought ${numStocks} of ${stockSymbol} for ${transPrice}`).status(200);
       } catch(e:any) {
         await errorLogs.insertOne({
+          type: "ErrorEventType",
           transactionId: 1, 
           timestamp: new Date(), 
           server: "transaction-server", 
@@ -288,6 +301,7 @@ app.post('/commitBuy', async (req, res) => {
   const stockSymbol: string = "SYM";
 
   await userCommandLogs.insertOne({
+    type: "UserCommandType",
     transactionId: transactionId, 
     timestamp: new Date(), 
     server: "transaction-server", 
@@ -300,6 +314,7 @@ app.post('/commitBuy', async (req, res) => {
 
   if(!userExist) {
     await errorLogs.insertOne({
+      type: "ErrorEventType",
       transactionId: 1, 
       timestamp: new Date(), 
       server: "transaction-server", 
@@ -322,6 +337,7 @@ app.post('/commitBuy', async (req, res) => {
   // make sure uncommitted buy is not expired
   if(user && user.uncommittedBuys.expiryTime < new Date()) {
     await errorLogs.insertOne({
+      type: "ErrorEventType",
       transactionId: 1,
       timestamp: new Date(),
       server: "transaction-server", 
@@ -362,6 +378,7 @@ app.post('/commitBuy', async (req, res) => {
       await users.updateOne(filter, update);
   
       await accountTransactionLogs.insertOne({
+        type: "AccountTransactionType",
         transactionId: 1,
         timestamp: new Date(),
         server: "transaction-server",
@@ -374,6 +391,7 @@ app.post('/commitBuy', async (req, res) => {
       res.send(`Successfully committed buy`).status(200);
     } catch (e:any) {
       await errorLogs.insertOne({
+        type: "ErrorEventType",
         transactionId: 1,
         timestamp: new Date(),
         server: "transaction-server",
@@ -388,6 +406,7 @@ app.post('/commitBuy', async (req, res) => {
   }
   else {
     await errorLogs.insertOne({
+      type: "ErrorEventType",
       transactionId: 1, 
       timestamp: new Date(), 
       server: "transaction-server", 
@@ -422,6 +441,7 @@ app.post('/cancelBuy', async (req, res) => {
   const stockSymbol: string = "SYM";
 
   await userCommandLogs.insertOne({
+    type: "UserCommandType",
     transactionId: transactionId, 
     timestamp: new Date(), 
     server: "transaction-server", 
@@ -434,6 +454,7 @@ app.post('/cancelBuy', async (req, res) => {
 
   if(!userExist) {
     await errorLogs.insertOne({
+      type: "ErrorEventType",
       transactionId: 1, 
       timestamp: new Date(), 
       server: "transaction-server", 
@@ -453,6 +474,7 @@ app.post('/cancelBuy', async (req, res) => {
       await users.updateOne({username: username}, {$unset: {uncommittedBuys: ""}});
     } catch(e:any) {
       await errorLogs.insertOne({
+        type: "ErrorEventType",
         transactionId: 1, 
         timestamp: new Date(), 
         server: "transaction-server", 
@@ -466,6 +488,7 @@ app.post('/cancelBuy', async (req, res) => {
     }
   } else {
     await errorLogs.insertOne({
+      type: "ErrorEventType",
       transactionId: 1, 
       timestamp: new Date(), 
       server: "transaction-server", 
@@ -479,6 +502,7 @@ app.post('/cancelBuy', async (req, res) => {
   }
 
   await accountTransactionLogs.insertOne({
+    type: "AccountTransactionType",
     transactionId: 1, 
     timestamp: new Date(), 
     server: "transaction-server", 
@@ -514,6 +538,7 @@ app.post('/sell', async (req, res) => {
   const amount: number = 100;
 
   await userCommandLogs.insertOne({
+    type: "UserCommandType",
     transactionId: transactionId,
     timestamp: new Date(),
     server: "transaction-server",
@@ -529,6 +554,7 @@ app.post('/sell', async (req, res) => {
 
   if(!userExist) {
     await errorLogs.insertOne({
+      type: "ErrorEventType",
       transactionId: 1,
       timestamp: new Date(),
       server: "transaction-server",
@@ -545,6 +571,7 @@ app.post('/sell', async (req, res) => {
   const user = await users.findOne({username: username, stocks:{$elemMatch:{stockSymbol: stockSymbol, numStocks:{ $gt: 0}}}});
   if(!user) {
     await errorLogs.insertOne({
+      type: "ErrorEventType",
       transactionId: 1,
       timestamp: new Date(),
       server: "transaction-server",
@@ -562,6 +589,7 @@ app.post('/sell', async (req, res) => {
   const userStocks = user && user.stocks.find((stock: Stock) => stock.stockSymbol === stockSymbol);
   if(user && userStocks < numStocksSell) {
     await errorLogs.insertOne({
+      type: "ErrorEventType",
       transactionId: 1,
       timestamp: new Date(),
       server: "transaction-server",
@@ -591,6 +619,7 @@ app.post('/sell', async (req, res) => {
         }
       });
       await accountTransactionLogs.insertOne({
+        type: "AccountTransactionType",
         transactionId: 1,
         timestamp: new Date(),
         server: "transaction-server",
@@ -604,6 +633,7 @@ app.post('/sell', async (req, res) => {
       res.send(`Successfully sold ${numStocksSell} stocks`).status(200);
   } catch(e:any) {
     await errorLogs.insertOne({
+      type: "ErrorEventType",
       transactionId: 1,
       timestamp: new Date(),
       server: "transaction-server",
@@ -640,6 +670,7 @@ app.post('/commitSell', async (req, res) => {
   const stockSymbol: string = "SYM";
 
   await userCommandLogs.insertOne({
+    type: "UserCommandType",
     transactionId: transactionId,
     timestamp: new Date(),
     server: "transaction-server",
@@ -652,6 +683,7 @@ app.post('/commitSell', async (req, res) => {
 
   if(!userExist) {
     await errorLogs.insertOne({
+      type: "ErrorEventType",
       transactionId: 1,
       timestamp: new Date(),
       server: "transaction-server",
@@ -669,6 +701,7 @@ app.post('/commitSell', async (req, res) => {
   // make sure uncommitted sell not expired
   if(user && user.uncommittedSells.expiryTime < new Date()) {
     await errorLogs.insertOne({
+      type: "ErrorEventType",
       transactionId: 1,
       timestamp: new Date(),
       server: "transaction-server",
@@ -699,6 +732,7 @@ app.post('/commitSell', async (req, res) => {
       await users.updateOne({username: username}, update);
   
       await accountTransactionLogs.insertOne({
+        type: "AccountTransactionType",
         transactionId: 1,
         timestamp: new Date(),
         server: "transaction-server",
@@ -712,6 +746,7 @@ app.post('/commitSell', async (req, res) => {
       res.send(`Successfully committed sell`).status(200);
     } catch(e:any) {
       await errorLogs.insertOne({
+        type: "ErrorEventType",
         transactionId: 1,
         timestamp: new Date(),
         server: "transaction-server",
@@ -747,6 +782,7 @@ app.post('/cancelSell', async (req, res) => {
   const stockSymbol: string = "SYM";
   
   await userCommandLogs.insertOne({
+    type: "UserCommandType",
     transactionId: transactionId,
     timestamp: new Date(),
     server: "transaction-server",
@@ -759,6 +795,7 @@ app.post('/cancelSell', async (req, res) => {
 
   if(!userExist) {
     await errorLogs.insertOne({
+      type: "ErrorEventType",
       transactionId: 1,
       timestamp: new Date(),
       server: "transaction-server",
@@ -778,6 +815,7 @@ app.post('/cancelSell', async (req, res) => {
       await users.updateOne({username: username}, {$unset: {uncommittedSells: ""}});
     } catch(e:any) {
       await errorLogs.insertOne({
+        type: "ErrorEventType",
         transactionId: 1,
         timestamp: new Date(),
         server: "transaction-server",
@@ -790,6 +828,7 @@ app.post('/cancelSell', async (req, res) => {
       res.send(`Error: Failed to update account ${username}`).status(500);
     }
     await accountTransactionLogs.insertOne({
+      type: "AccountTransactionType",
       transactionId: 1,
       timestamp: new Date(),
       server: "transaction-server",
@@ -803,6 +842,7 @@ app.post('/cancelSell', async (req, res) => {
     res.send(`Successfully cancelled sell`).status(200);
   } else {
     await errorLogs.insertOne({
+      type: "ErrorEventType",
       transactionId: 1,
       timestamp: new Date(),
       server: "transaction-server",
@@ -840,6 +880,7 @@ app.post('/setBuyAmount', async (req, res) => {
   const amount: number = 100;
 
   await userCommandLogs.insertOne({
+    type: "UserCommandType",
     transactionId: transactionId,
     timestamp: new Date(),
     server: "transaction-server",
@@ -853,6 +894,7 @@ app.post('/setBuyAmount', async (req, res) => {
 
   if(!userExist) {
     await errorLogs.insertOne({
+      type: "ErrorEventType",
       transactionId: 1,
       timestamp: new Date(),
       server: "transaction-server",
@@ -885,6 +927,7 @@ app.post('/setBuyAmount', async (req, res) => {
     );
 
     await accountTransactionLogs.insertOne({
+      type: "AccountTransactionType",
       transactionId: 1,
       timestamp: new Date(),
       server: "transaction-server",
@@ -897,6 +940,7 @@ app.post('/setBuyAmount', async (req, res) => {
     res.send(`Successfully set buy amount`).status(200);
   } catch(e:any) {
     await errorLogs.insertOne({
+      type: "ErrorEventType",
       transactionId: 1,
       timestamp: new Date(),
       server: "transaction-server",
@@ -934,6 +978,7 @@ app.post('/setBuyTrigger', async (req, res) => {
   const triggerPrice: number = 10;
 
   await userCommandLogs.insertOne({
+    type: "UserCommandType",
     transactionId: transactionId,
     timestamp: new Date(),
     server: "transaction-server",
@@ -947,6 +992,7 @@ app.post('/setBuyTrigger', async (req, res) => {
 
   if(!userExist) {
     await errorLogs.insertOne({
+      type: "ErrorEventType",
       transactionId: 1,
       timestamp: new Date(),
       server: "transaction-server",
@@ -964,6 +1010,7 @@ app.post('/setBuyTrigger', async (req, res) => {
 
   if(!userTrigger) {
     await errorLogs.insertOne({
+      type: "ErrorEventType",
       transactionId: 1,
       timestamp: new Date(),
       server: "transaction-server",
@@ -980,6 +1027,7 @@ app.post('/setBuyTrigger', async (req, res) => {
 
   if(user && transPrice > user.balance) {
     await errorLogs.insertOne({
+      type: "ErrorEventType",
       transactionId: 1,
       timestamp: new Date(),
       server: "transaction-server",
@@ -1018,6 +1066,7 @@ app.post('/setBuyTrigger', async (req, res) => {
     });
 
     await accountTransactionLogs.insertOne({
+      type: "AccountTransactionType",
       transactionId: 1,
       timestamp: new Date(),
       server: "transaction-server",
@@ -1031,6 +1080,7 @@ app.post('/setBuyTrigger', async (req, res) => {
     res.send(`Successfully set buy trigger`).status(200);
   } catch(e:any) {
     await errorLogs.insertOne({
+      type: "ErrorEventType",
       transactionId: 1,
       timestamp: new Date(),
       server: "transaction-server",
@@ -1066,6 +1116,7 @@ app.post('/cancelSetBuy', async (req, res) => {
   const stockSymbol: string = "SYM";
 
   await userCommandLogs.insertOne({
+    type: "UserCommandType",
     transactionId: transactionId,
     timestamp: new Date(),
     server: "transaction-server",
@@ -1078,6 +1129,7 @@ app.post('/cancelSetBuy', async (req, res) => {
 
   if(!userExist) {
     await errorLogs.insertOne({
+      type: "ErrorEventType",
       transactionId: 1,
       timestamp: new Date(),
       server: "transaction-server",
@@ -1094,6 +1146,7 @@ app.post('/cancelSetBuy', async (req, res) => {
 
   if(!userTrigger) {
     await errorLogs.insertOne({
+      type: "ErrorEventType",
       transactionId: 1,
       timestamp: new Date(),
       server: "transaction-server",
@@ -1127,6 +1180,7 @@ app.post('/cancelSetBuy', async (req, res) => {
     });
 
     await accountTransactionLogs.insertOne({
+      type: "AccountTransactionType",
       transactionId: 1,
       timestamp: new Date(),
       server: "transaction-server",
@@ -1140,6 +1194,7 @@ app.post('/cancelSetBuy', async (req, res) => {
     res.send(`Successfully cancelled set buy`).status(200);
   } catch(e:any) {
     await errorLogs.insertOne({
+      type: "ErrorEventType",
       transactionId: 1,
       timestamp: new Date(),
       server: "transaction-server",
@@ -1177,6 +1232,7 @@ app.post('/setSellAmount', async (req, res) => {
   const amount: number = 10;
 
   await userCommandLogs.insertOne({
+    type: "UserCommandType",
     transactionId: transactionId,
     timestamp: new Date(),
     server: "transaction-server",
@@ -1190,6 +1246,7 @@ app.post('/setSellAmount', async (req, res) => {
 
   if(!userExist) {
     await errorLogs.insertOne({
+      type: "ErrorEventType",
       transactionId: 1,
       timestamp: new Date(),
       server: "transaction-server",
@@ -1209,6 +1266,7 @@ app.post('/setSellAmount', async (req, res) => {
 
     if(userStocks < amount) {
       await errorLogs.insertOne({
+        type: "ErrorEventType",
         transactionId: 1,
         timestamp: new Date(),
         server: "transaction-server",
@@ -1279,6 +1337,7 @@ app.post('/setSellAmount', async (req, res) => {
       );
   
       await accountTransactionLogs.insertOne({
+        type: "AccountTransactionType",
         transactionId: 1,
         timestamp: new Date(),
         server: "transaction-server",
@@ -1291,6 +1350,7 @@ app.post('/setSellAmount', async (req, res) => {
       res.send(`Successfully set sell amount`).status(200);
     } catch(e:any) {
       await errorLogs.insertOne({
+        type: "ErrorEventType",
         transactionId: 1,
         timestamp: new Date(),
         server: "transaction-server",
@@ -1304,6 +1364,7 @@ app.post('/setSellAmount', async (req, res) => {
     }
   } else {
     await errorLogs.insertOne({
+      type: "ErrorEventType",
       transactionId: 1,
       timestamp: new Date(),
       server: "transaction-server",
@@ -1341,6 +1402,7 @@ app.post('/setSellTrigger', async (req, res) => {
   const triggerPrice: number = 10;
 
   await userCommandLogs.insertOne({
+    type: "UserCommandType",
     transactionId: transactionId,
     timestamp: new Date(),
     server: "transaction-server",
@@ -1354,6 +1416,7 @@ app.post('/setSellTrigger', async (req, res) => {
 
   if(!userExist) {
     await errorLogs.insertOne({
+      type: "ErrorEventType",
       transactionId: 1,
       timestamp: new Date(),
       server: "transaction-server",
@@ -1373,6 +1436,7 @@ app.post('/setSellTrigger', async (req, res) => {
 
   if(!trigger) {
     await errorLogs.insertOne({
+      type: "ErrorEventType",
       transactionId: 1,
       timestamp: new Date(),
       server: "transaction-server",
@@ -1399,6 +1463,7 @@ app.post('/setSellTrigger', async (req, res) => {
     });
 
     await accountTransactionLogs.insertOne({
+      type: "AccountTransactionType",
       transactionId: 1,
       timestamp: new Date(),
       server: "transaction-server",
@@ -1411,6 +1476,7 @@ app.post('/setSellTrigger', async (req, res) => {
     res.send(`Successfully set sell trigger`).status(200);
   } catch(e:any) {
     await errorLogs.insertOne({
+      type: "ErrorEventType",
       transactionId: 1,
       timestamp: new Date(),
       server: "transaction-server",
@@ -1446,6 +1512,7 @@ app.post('/cancelSetSell', async (req, res) => {
   const stockSymbol: string = "SYM";
 
   await userCommandLogs.insertOne({
+    type: "UserCommandType",
     transactionId: transactionId,
     timestamp: new Date(),
     server: "transaction-server",
@@ -1458,6 +1525,7 @@ app.post('/cancelSetSell', async (req, res) => {
 
   if(!userExist) {
     await errorLogs.insertOne({
+      type: "ErrorEventType",
       transactionId: 1,
       timestamp: new Date(),
       server: "transaction-server",
@@ -1479,6 +1547,7 @@ app.post('/cancelSetSell', async (req, res) => {
 
   if(!trigger) {
     await errorLogs.insertOne({
+      type: "ErrorEventType",
       transactionId: 1,
       timestamp: new Date(),
       server: "transaction-server",
@@ -1512,6 +1581,7 @@ app.post('/cancelSetSell', async (req, res) => {
 
 
     await accountTransactionLogs.insertOne({
+      type: "AccountTransactionType",
       transactionId: 1,
       timestamp: new Date(),
       server: "transaction-server",
@@ -1523,6 +1593,7 @@ app.post('/cancelSetSell', async (req, res) => {
     res.send(`Successfully cancelled sell trigger`).status(200);
   } catch(e:any) {
     await errorLogs.insertOne({
+      type: "ErrorEventType",
       transactionId: 1,
       timestamp: new Date(),
       server: "transaction-server",
@@ -1536,18 +1607,138 @@ app.post('/cancelSetSell', async (req, res) => {
   }
 });
 
+app.post('/dumplog' , async (req, res) => {
+  const db = await connectToDatabase();
+  if(!db) {
+    res.send("Error: Database connection failed").status(500);
+    return;
+  }
+  let userCommandLogs = await db.collection("USER_COMMAND_LOGS");
+  let accountTransactionLogs = await db.collection("ACCOUNT_TRANSACTION_LOGS");
+  let errorLogs = await db.collection("ERROR_LOGS");
 
+  const transactionId: number = req.body.transactionId;
+  const username: string = req.body.username;
+  const filename: string = req.body.filename;
 
+  await userCommandLogs.insertOne({
+    type: "UserCommandType",
+    transactionId: transactionId,
+    timestamp: new Date(),
+    server: "transaction-server",
+    command: "DUMPLOG",
+    username: username,
+    filename: filename ?? ""
+  });
 
+  if(username) {
+    const userExist = await userExists(username);
 
+    if(!userExist) {
+      await errorLogs.insertOne({
+        type: "ErrorEventType",
+        transactionId: 1,
+        timestamp: new Date(),
+        server: "transaction-server",
+        errorMessage: "User does not exist",
+        command: "DUMPLOG",
+        username: username,
+        filename: filename ?? ""
+      });
 
-// Load the /posts routes
-// app.use("/", routes);
+      return res.send(`Error: User ${username} does not exist`).status(500);
+    }
 
-// Global error handling
-// app.use((err, _req, res, next) => {
-//   res.status(500).send("Uh oh! An unexpected error occured.")
-// })
+    const userLogs = await accountTransactionLogs.find({
+      username: username
+    },
+    { projection: { _id: 0 } }).toArray();
+
+    const logs = JSON.stringify(userLogs);
+
+    res.send(logs).status(200);
+  } else {
+    const allLogs = await accountTransactionLogs.find({}, { projection: { _id: 0 } }).toArray();
+    console.log(allLogs);
+
+    const logs = JSON.stringify(allLogs);
+
+    res.send(logs).status(200);
+  }
+});
+
+app.post('/displaySummary', async (req, res) => {
+  const db = await connectToDatabase();
+  if(!db) {
+    res.send("Error: Database connection failed").status(500);
+    return;
+  }
+  let userCommandLogs = await db.collection("USER_COMMAND_LOGS");
+  let accountTransactionLogs = await db.collection("ACCOUNT_TRANSACTION_LOGS");
+  let errorLogs = await db.collection("ERROR_LOGS");
+  let users = await db.collection("USERS");
+  
+  const transactionId: number = req.body.transactionId;
+  const username: string = req.body.username;
+
+  await userCommandLogs.insertOne({
+    type: "UserCommandType",
+    transactionId: transactionId,
+    timestamp: new Date(),
+    server: "transaction-server",
+    command: "DISPLAY_SUMMARY",
+    username: username
+  });
+
+  const userExist = await userExists(username);
+
+  if(!userExist) {
+    await errorLogs.insertOne({
+      transactionId: 1,
+      timestamp: new Date(),
+      server: "transaction-server",
+      errorMessage: "User does not exist",
+      command: "DISPLAY_SUMMARY",
+      username: username
+    });
+
+    return res.send(`Error: User ${username} does not exist`).status(500);
+  }
+
+  const user = await users.findOne({
+    username: username
+  });
+
+  if (user) {
+    const stocks = user.stocks;
+    const reservedStocks = user.reservedStocks;
+  
+    const stockSummary = stocks.map((stock: any) => {
+      return {
+        stockSymbol: stock.stockSymbol,
+        numStocks: stock.numStocks
+      }
+    });
+  
+    const reservedStockSummary = reservedStocks.map((stock: any) => {
+      return {
+        stockSymbol: stock.stockSymbol,
+        numStocks: stock.numStocks
+      }
+    });
+  
+    const summary = {
+      username: username,
+      cash: user.cash,
+      stocks: stockSummary,
+      reservedStocks: reservedStockSummary
+    }
+  
+    const dump = JSON.stringify(summary);
+  
+    res.send(dump).status(200);
+  }
+});
 
 // start the Express server
 app.listen(PORT, () => {
