@@ -32,12 +32,12 @@ export const getQuote = async (sym: string, username: string) =>{
                  
                 client.destroy();
                 await redisClient.set(sym, data[0], {EX: 60});
-                await quoteServerLogs.insertOne({transactionId: 1, timestamp: new Date(), server: "transaction-server", command: "QUOTE", username: username, stockSymbol: sym, quoteServerTime: data[3], cryptokey: data[4]});
+                await quoteServerLogs.insertOne({type: "QuoteServerType", transactionId: 1, timestamp: new Date(), server: "transaction-server", command: "QUOTE", username: username, stockSymbol: sym, quoteServerTime: data[3], cryptokey: data[4]});
                 return data[0];
             });
         
             client.on('error',async (err)=>{
-                await errorLogs.insertOne({transactionId: 1, timestamp: new Date(), server: "transaction-server", errorMessage: err.message, command: "QUOTE", username: user_id});
+                await errorLogs.insertOne({type: "ErrorEventType", transactionId: 1, timestamp: new Date(), server: "transaction-server", errorMessage: err.message, command: "QUOTE", username: user_id});
                 console.log(`Error: ${err.message}`);
                 client.destroy();
             });

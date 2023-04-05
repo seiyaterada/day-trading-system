@@ -72,6 +72,7 @@ export const job = new CronJob('0 * * * * *', async () => {
 						stockSymbol: buyTrigger.stockSymbol
 					});
 					await accountTransactionLogs.insertOne({
+						type: "AccountTransactionType",
 						transactionId: 1,
 						timestamp: new Date(),
 						server: "transaction-server",
@@ -83,6 +84,7 @@ export const job = new CronJob('0 * * * * *', async () => {
 				} catch(e:any) {
 					console.log(e.message);
 					await errorLogs.insertOne({
+						type: "ErrorEventType",
 						transactionId: 1,
 						timestamp: new Date(),
 						server: "transaction-server",
@@ -123,6 +125,7 @@ export const job = new CronJob('0 * * * * *', async () => {
 						stockSymbol: sellTrigger.stockSymbol
 					});
 					await accountTransactionLogs.insertOne({
+						type: "AccountTransactionType",
 						transactionId: 1,
 						timestamp: new Date(),
 						server: "transaction-server",
@@ -134,6 +137,7 @@ export const job = new CronJob('0 * * * * *', async () => {
 				} catch(e:any) {
 					console.log(e.message);
 					await errorLogs.insertOne({
+						type: "ErrorEventType",
 						transactionId: 1,
 						timestamp: new Date(),
 						server: "transaction-server",
