@@ -5,8 +5,10 @@
 
 const axios = require("axios").default;
 const url = "http://localhost:3000"
-import { saveAs } from "file-saver";
-import {Blob} from 'node:buffer';
+const fs = require("fs");
+
+import { json2xml } from 'xml-js';
+import { omit } from 'lodash';
 
 class Command {
   transactionId: number | null;
@@ -379,6 +381,19 @@ function userDumplog(command:string) {
     .post(functionURL, commandToSend)
     .then((response:any) => {
       console.log(response.data);
+      const data = JSON.stringify(response.data);
+
+      const xml = json2xml(response.data.map((data:any) => {
+        const elemName = data.type;
+        return { [elemName]: omit(data, 'type') };
+      }
+      ), { compact: true });
+
+      fs.writeFile(filename, xml, function(err:any) {
+        if (err) {
+            console.log(err);
+        }
+      });
       //res.status(200).json(response.data);
     })
     .catch((error:any) => {
@@ -401,6 +416,18 @@ function totalDumplog(command:string) {
     .post(functionURL, commandToSend)
     .then((response:any) => {
       console.log(response.data);
+      const data = JSON.stringify(response.data);
+
+      const xml = json2xml(response.data.map((data:any) => {
+        return { elemName: omit(data, 'type') };
+      }
+      ), { compact: true });
+
+      fs.writeFile(filename, xml, function(err:any) {
+        if (err) {
+            console.log(err);
+        }
+      });
       //res.status(200).json(response.data);
     })
     .catch((error:any) => {
@@ -423,6 +450,12 @@ function displaySummary(command:string) {
     .post(functionURL, commandToSend)
     .then((response:any) => {
       console.log(response.data);
+      const data = JSON.stringify(response.data);
+      fs.writeFile("summar.json", data, function(err:any) {
+        if (err) {
+            console.log(err);
+        }
+      });
       //res.status(200).json(response.data);
     })
     .catch((error:any) => {
@@ -432,7 +465,6 @@ function displaySummary(command:string) {
 }
 
 function main() {
-  const fs = require("fs");
   var command = "";
   var data = fs.readFileSync("C:/Users/seiya/Documents/Uni/Second Year/Seng 468/day-trading-system/command-line-app/bin/user1.txt").toString().split("\n");
   for (let i = 0; i < data.length; i++) {
