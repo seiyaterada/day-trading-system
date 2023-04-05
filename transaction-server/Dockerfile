@@ -1,5 +1,8 @@
 FROM node:16-alpine
 
+ENV NEW_RELIC_NO_CONFIG_FILE=true \
+NEW_RELIC_LOG=stdout
+
 WORKDIR /src
 
 COPY package*.json ./

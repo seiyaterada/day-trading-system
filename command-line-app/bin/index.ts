@@ -380,7 +380,7 @@ function userDumplog(command:string) {
   axios
     .post(functionURL, commandToSend)
     .then((response:any) => {
-      console.log(response.data);
+      // console.log(response.data);
       const data = JSON.stringify(response.data);
 
       const xml = json2xml(response.data.map((data:any) => {
@@ -415,7 +415,7 @@ function totalDumplog(command:string) {
   axios
     .post(functionURL, commandToSend)
     .then((response:any) => {
-      console.log(response.data);
+      // console.log(response.data);
       const data = JSON.stringify(response.data);
 
       const xml = json2xml(response.data.map((data:any) => {
@@ -449,7 +449,7 @@ function displaySummary(command:string) {
   axios
     .post(functionURL, commandToSend)
     .then((response:any) => {
-      console.log(response.data);
+      // console.log(response.data);
       const data = JSON.stringify(response.data);
       fs.writeFile("summar.json", data, function(err:any) {
         if (err) {
@@ -466,7 +466,8 @@ function displaySummary(command:string) {
 
 function main() {
   var command = "";
-  var data = fs.readFileSync("C:/Users/seiya/Documents/Uni/Second Year/Seng 468/day-trading-system/command-line-app/bin/user1.txt").toString().split("\n");
+  var data = fs.readFileSync("put path here").toString().split("\n");
+  const startTime = Date.now();
   for (let i = 0; i < data.length; i++) {
     //console.log(data[line])
     data[i] = data[i].toString().replace(/[\[\]']+/g,'');
@@ -530,6 +531,11 @@ function main() {
         break;
     }
   }
+  const endTime = Date.now();
+  const totalTime = Math.floor(endTime - startTime)/1000;
+  console.log("Total time: ", totalTime, " seconds");
+  console.log("Averate transaction time: ", data.length/totalTime, " /second");
+
   return 0;
 }
 

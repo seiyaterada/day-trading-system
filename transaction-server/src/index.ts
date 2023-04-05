@@ -6,8 +6,7 @@ import { userExists } from "./userExists";
 import { getQuote } from "./quote";
 import redisClient from "../db/redisClient";
 import {job} from "./triggerJob";
-import { saveAs } from "file-saver";
-import {Blob} from 'node:buffer';
+require('newrelic');
 // import { Blob } from 'blob';
 // import routes from "./routes.mjs";
 
