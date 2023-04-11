@@ -1,0 +1,54 @@
+version: '3'
+services:
+    transact:
+        # container_name: TransactionServer
+        build: ./transaction-server/
+        ports:
+            - "3000"
+        networks:
+            - my-network
+        environment:
+            - NEW_RELIC_LICENSE_KEY=cfc19fda054a34427329a409ec96bb8eFFFFNRAL
+            - NEW_RELIC_APP_NAME="DayTradingSystem"
+            - PORT=3000
+        depends_on:
+            - mongo
+            - redis
+        restart: always
+    mongo:
+        container_name: DBContainer
+        volumes:
+            - 'mongo-data:/data/db'
+        image: 'mongo:latest'
+        ports:
+            - 27017:27017
+        networks:
+            - my-network
+    redis:
+        container_name: RedisContainer
+        image: 'redis:latest'
+        command: redis-server --appendonly yes
+        volumes:
+            - redis_data:/data
+        ports:
+            - 6379:6379
+        networks:
+            - my-network
+    nginx:
+        container_name: NginxContainer
+        image: nginx:latest
+        ports:
+          - "80:80"
+        depends_on:
+          - transact
+        volumes:
+          - ./nginx.conf:/etc/nginx/nginx.conf:ro
+        networks:
+            - my-network
+
+volumes:
+    mongo-data:
+    redis_data:
+networks:
+  my-network:
+

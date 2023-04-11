@@ -4,7 +4,7 @@
 // then run CLI with "send_command file.txt"
 
 const axios = require("axios").default;
-const url = "http://localhost:3000"
+const url = "http://localhost:80"
 const fs = require("fs");
 
 import { json2xml } from 'xml-js';
