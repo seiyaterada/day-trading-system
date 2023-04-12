@@ -8,8 +8,6 @@ services:
         networks:
             - my-network
         environment:
-            - NEW_RELIC_LICENSE_KEY=cfc19fda054a34427329a409ec96bb8eFFFFNRAL
-            - NEW_RELIC_APP_NAME="DayTradingSystem"
             - PORT=3000
         depends_on:
             - mongo
