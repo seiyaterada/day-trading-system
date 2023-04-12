@@ -60,7 +60,7 @@ import {
             console.log("username: ", username);
             console.log("amount: ", floatAmount);
             console.log("transactionid: ", window.transactionNumber);
-            const commandToSend = new Command(window.transactionNumber, username, floatAmount, null, null);
+            const commandToSend = new Command(window.transactionNumber, window.username, floatAmount, null, null);
             var functionURL = url + '/add';
             axios
                 .post(functionURL, commandToSend)
@@ -89,8 +89,8 @@ import {
                 <ModalCloseButton />
                 <ModalBody>
                 
-                <FormLabel>User ID</FormLabel>
-                <Input onChange={event => setUsername(event.currentTarget.value)}/>
+                {/* <FormLabel>User ID</FormLabel>
+                <Input onChange={event => setUsername(event.currentTarget.value)}/> */}
                 <FormLabel pt='3'>Amount</FormLabel>
                 <Input onChange={event => setAmount(event.currentTarget.value)}/>
                 </ModalBody>
@@ -110,7 +110,7 @@ import {
             <AlertDialogOverlay>
                 <AlertDialogContent>
                     <AlertDialogHeader fontSize='lg' fontWeight='bold'>
-                    {alertHeader}
+                    
                     </AlertDialogHeader>
 
                     <AlertDialogBody>

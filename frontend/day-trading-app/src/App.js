@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useState} from 'react';
 import {
   ChakraProvider,
   Box,
@@ -27,10 +27,17 @@ import {
 import { ColorModeSwitcher } from './ColorModeSwitcher';
 import { Logo } from './Logo';
 import MainPage from './common/centralpage/CentralPage';
+import SignInPage from './common/signinpage/SignInPage';
+import { BrowserRouter, Route, Routes, Switch } from "react-router-dom";
+
 
 function App() {
+  const [currentPage, setPage] = useState('login');
+  const togglePage = (pageName) => {
+    setPage(pageName);
+  }
   return (
-    <MainPage/>
+    currentPage === 'login' ? <SignInPage onPageSwitch={togglePage}/> : <MainPage />
   );
 }
 

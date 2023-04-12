@@ -63,7 +63,7 @@ import {
         console.log("stock symbol: ", stockSymbol);
         console.log("amount: ", floatAmount);
 
-        const commandToSend = new Command(window.transactionNumber, username, floatAmount, stockSymbol, null);
+        const commandToSend = new Command(window.transactionNumber, window.username, floatAmount, stockSymbol, null);
         var functionURL = url + '/sell';
         axios
             .post(functionURL, commandToSend)
@@ -74,6 +74,8 @@ import {
             var firstWord = response.data.replace(/ .*/,'');
             if(firstWord != 'Error:'){
               onCommitOpen();
+            }else{
+              onAlertOpen();
             }
             })
             .catch((error) => {
@@ -89,7 +91,7 @@ import {
     var floatAmount = parseFloat(amount);
     console.log("username: ", username);
 
-    const commandToSend = new Command(window.transactionNumber, username, null, null, null);
+    const commandToSend = new Command(window.transactionNumber, window.username, null, null, null);
     var functionURL = url + '/commitSell';
     axios
         .post(functionURL, commandToSend)
@@ -112,7 +114,7 @@ const cancelSell = async event => {
   var floatAmount = parseFloat(amount);
   console.log("username: ", username);
 
-  const commandToSend = new Command(window.transactionNumber, username, null, null, null);
+  const commandToSend = new Command(window.transactionNumber, window.username, null, null, null);
   var functionURL = url + '/cancelSell';
   axios
       .post(functionURL, commandToSend)
@@ -140,8 +142,8 @@ const cancelSell = async event => {
             <ModalCloseButton />
             <ModalBody>
             
-            <FormLabel>User ID</FormLabel>
-            <Input onChange={event => setUsername(event.currentTarget.value)}/>
+            {/* <FormLabel>User ID</FormLabel>
+            <Input onChange={event => setUsername(event.currentTarget.value)}/> */}
             <FormLabel pt='3'>Stock Symbol</FormLabel>
             <Input onChange={event => setStockSymbol(event.currentTarget.value)}/>
             <FormLabel pt='3'>Amount</FormLabel>
@@ -163,7 +165,7 @@ const cancelSell = async event => {
         <AlertDialogOverlay>
           <AlertDialogContent>
             <AlertDialogHeader fontSize='lg' fontWeight='bold'>
-              {alertHeader}
+              
             </AlertDialogHeader>
 
             <AlertDialogBody>

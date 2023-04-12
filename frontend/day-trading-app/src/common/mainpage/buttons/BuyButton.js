@@ -60,7 +60,7 @@ import {
       var floatAmount = parseFloat(amount);
       console.log("username: ", username);
 
-      const commandToSend = new Command(window.transactionNumber, username, null, null, null);
+      const commandToSend = new Command(window.transactionNumber, window.username, null, null, null);
       var functionURL = url + '/commitBuy';
       axios
           .post(functionURL, commandToSend)
@@ -84,7 +84,7 @@ import {
         console.log("stock symbol: ", stockSymbol);
         console.log("amount: ", floatAmount);
 
-        const commandToSend = new Command(window.transactionNumber, username, floatAmount, stockSymbol, null);
+        const commandToSend = new Command(window.transactionNumber, window.username, floatAmount, stockSymbol, null);
         var functionURL = url + '/buy';
         axios
             .post(functionURL, commandToSend)
@@ -109,25 +109,25 @@ import {
         onModalClose();
     };
     const cancelBuy = async event => {
-    event.preventDefault();
-    var floatAmount = parseFloat(amount);
-    console.log("username: ", username);
+      event.preventDefault();
+      var floatAmount = parseFloat(amount);
+      console.log("username: ", username);
 
-    const commandToSend = new Command(window.transactionNumber, username, null, null, null);
-    var functionURL = url + '/cancelSell';
-    axios
-        .post(functionURL, commandToSend)
-        .then((response) => {
-        console.log(response.data);
-        setAlertMessage(response.data);
-        //res.status(200).json(response.data);
-        })
-        .catch((error) => {
-        console.log("###error in CLI###");
-        console.log(error);
-        });
-    window.transactionNumber = window.transactionNumber + 1;
-    onCommitClose();
+      const commandToSend = new Command(window.transactionNumber, window.username, null, null, null);
+      var functionURL = url + '/cancelSell';
+      axios
+          .post(functionURL, commandToSend)
+          .then((response) => {
+          console.log(response.data);
+          setAlertMessage(response.data);
+          //res.status(200).json(response.data);
+          })
+          .catch((error) => {
+          console.log("###error in CLI###");
+          console.log(error);
+          });
+      window.transactionNumber = window.transactionNumber + 1;
+      onCommitClose();
   };
     
     return (
@@ -141,8 +141,8 @@ import {
             <ModalCloseButton />
             <ModalBody>
             
-            <FormLabel>User ID</FormLabel>
-            <Input onChange={event => setUsername(event.currentTarget.value)}/>
+            {/* <FormLabel>User ID</FormLabel>
+            <Input onChange={event => setUsername(event.currentTarget.value)}/> */}
             <FormLabel pt='3'>Stock Symbol</FormLabel>
             <Input onChange={event => setStockSymbol(event.currentTarget.value)}/>
             <FormLabel pt='3'>Amount</FormLabel>
@@ -164,7 +164,6 @@ import {
         <AlertDialogOverlay>
           <AlertDialogContent>
             <AlertDialogHeader fontSize='lg' fontWeight='bold'>
-              {alertHeader}
             </AlertDialogHeader>
 
             <AlertDialogBody>

@@ -14,6 +14,8 @@ import {
   FormLabel,
   Input,
 } from "@chakra-ui/react";
+import { BrowserRouter, Switch } from "react-router-dom";
+
 import BuyButton from "./buttons/BuyButton";
 import StockList from "../stocklist/StockList";
 import AddButton from "./buttons/AddButton";
@@ -34,26 +36,6 @@ const MainPage = (props) => {
         <BuyButton/>
         <SellButton/>
       </Grid>
-
-      <Modal isOpen={isOpen} onClose={onClose}>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Modal Title</ModalHeader>
-          <ModalBody>
-            <FormControl>
-              <FormLabel>Input Field</FormLabel>
-              <Input placeholder="Enter text here" />
-            </FormControl>
-          </ModalBody>
-
-          <ModalFooter>
-            <Button colorScheme="blue" mr={3} onClick={onClose}>
-              Close
-            </Button>
-            <Button variant="ghost">Secondary Action</Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
     </Box>
   );
 }
