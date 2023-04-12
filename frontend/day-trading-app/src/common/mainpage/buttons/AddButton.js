@@ -16,7 +16,13 @@ import {
     NumberIncrementStepper,
     NumberDecrementStepper,
     Checkbox, 
-    CheckboxGroup
+    CheckboxGroup,
+    AlertDialog,
+    AlertDialogBody,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogContent,
+    AlertDialogOverlay,
       
   } from '@chakra-ui/react'
 
@@ -29,7 +35,7 @@ import {
         amount;
         stockSymbol;
         filename;
-
+  
         constructor(transactionId, username, amount, stockSymbol, filename) {
             this.transactionId = transactionId;
             this.username = username;
@@ -40,12 +46,15 @@ import {
     }
 
     const AddButton = (props) => {
-
+        const { isOpen: isModalOpen, onOpen: onModalOpen, onClose: onModalClose } = useDisclosure();
+        const { isOpen: isAlertOpen, onOpen: onAlertOpen, onClose: onAlertClose } = useDisclosure();
         const { isOpen, onOpen, onClose } = useDisclosure()
         const [username, setUsername] = useState('');
         const [amount, setAmount] = useState(0);
+        const [alertMessage, setAlertMessage] = useState('');
+        const [alertHeader, setAlertHeader] = useState('');
         
-        const handleBuy = async event => {
+        const handleAdd = async event => {
             event.preventDefault();
             var floatAmount = parseFloat(amount);
             console.log("username: ", username);
@@ -58,19 +67,21 @@ import {
                 .then((response) => {
                 console.log(response.data);
                 //res.status(200).json(response.data);
+                setAlertMessage(response.data)
                 })
                 .catch((error) => {
                 console.log("###error in CLI###");
                 console.log(error);
                 });
             window.transactionNumber = window.transactionNumber + 1;
-            onClose();
+            onModalClose();
+            onAlertOpen();
         };
         
         return (
         <Box>
-            <Button colorScheme='blue' onClick={onOpen}>Add</Button>
-            <Modal isOpen={isOpen} onClose={onClose}>
+            <Button colorScheme='blue' onClick={onModalOpen}>Add</Button>
+            <Modal isOpen={isModalOpen} onClose={onModalClose}>
             <ModalOverlay />
             <ModalContent>
             
@@ -85,13 +96,35 @@ import {
                 </ModalBody>
     
                 <ModalFooter>
-                <Button colorScheme='blue' mr={3} onClick={handleBuy}>
+                <Button colorScheme='blue' mr={3} onClick={handleAdd}>
                     Save
                 </Button>
-                <Button variant='ghost' onClick={onClose}>Cancel</Button>
+                <Button variant='ghost' onClick={onModalClose}>Cancel</Button>
                 </ModalFooter>
             </ModalContent>
             </Modal>
+            <AlertDialog
+            isOpen={isAlertOpen}
+            onClose={onAlertClose}
+            >
+            <AlertDialogOverlay>
+                <AlertDialogContent>
+                    <AlertDialogHeader fontSize='lg' fontWeight='bold'>
+                    {alertHeader}
+                    </AlertDialogHeader>
+
+                    <AlertDialogBody>
+                    {alertMessage}
+                    </AlertDialogBody>
+
+                    <AlertDialogFooter>
+                    <Button onClick={onAlertClose}>
+                        Ok
+                    </Button>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+                </AlertDialogOverlay>
+            </AlertDialog>
         </Box>
         )
   }

@@ -17,8 +17,13 @@ import {
     NumberIncrementStepper,
     NumberDecrementStepper,
     Checkbox, 
-    CheckboxGroup
-      
+    CheckboxGroup,
+    AlertDialog,
+    AlertDialogBody,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogContent,
+    AlertDialogOverlay, 
   } from '@chakra-ui/react'
 
   const url = "http://localhost:3000";
@@ -41,10 +46,36 @@ import {
 
   const BuyButton = (props) => {
 
-    const { isOpen, onOpen, onClose } = useDisclosure()
+    const { isOpen: isModalOpen, onOpen: onModalOpen, onClose: onModalClose } = useDisclosure();
+    const { isOpen: isAlertOpen, onOpen: onAlertOpen, onClose: onAlertClose } = useDisclosure();
+    const { isOpen: isCommitOpen, onOpen: onCommitOpen, onClose: onCommitClose } = useDisclosure();
     const [username, setUsername] = useState('');
     const [stockSymbol, setStockSymbol] = useState('');
     const [amount, setAmount] = useState(0);
+    const [alertMessage, setAlertMessage] = useState('');
+    const [alertHeader, setAlertHeader] = useState('');
+
+    const commitBuy = async event => {
+      event.preventDefault();
+      var floatAmount = parseFloat(amount);
+      console.log("username: ", username);
+
+      const commandToSend = new Command(window.transactionNumber, username, null, null, null);
+      var functionURL = url + '/commitBuy';
+      axios
+          .post(functionURL, commandToSend)
+          .then((response) => {
+          console.log(response.data);
+          setAlertMessage(response.data);
+          })
+          .catch((error) => {
+          console.log("###error in CLI###");
+          console.log(error);
+          });
+      window.transactionNumber = window.transactionNumber + 1;
+      onCommitClose();
+      onAlertOpen();
+    };
 
     const handleBuy = async event => {
         event.preventDefault();
@@ -60,19 +91,49 @@ import {
             .then((response) => {
             console.log(response.data);
             //res.status(200).json(response.data);
+            setAlertMessage(response.data);
+            var firstWord = response.data.replace(/ .*/,'');
+            if(firstWord != 'Error:'){
+              onCommitOpen();
+            }else{
+              onAlertOpen();
+            }
             })
             .catch((error) => {
             console.log("###error in CLI###");
             console.log(error);
+            setAlertHeader('Error');
+            setAlertMessage(error);
             });
         window.transactionNumber = window.transactionNumber + 1;
-        onClose();
+        onModalClose();
     };
+    const cancelBuy = async event => {
+    event.preventDefault();
+    var floatAmount = parseFloat(amount);
+    console.log("username: ", username);
+
+    const commandToSend = new Command(window.transactionNumber, username, null, null, null);
+    var functionURL = url + '/cancelSell';
+    axios
+        .post(functionURL, commandToSend)
+        .then((response) => {
+        console.log(response.data);
+        setAlertMessage(response.data);
+        //res.status(200).json(response.data);
+        })
+        .catch((error) => {
+        console.log("###error in CLI###");
+        console.log(error);
+        });
+    window.transactionNumber = window.transactionNumber + 1;
+    onCommitClose();
+  };
     
     return (
       <Box>
-        <Button colorScheme='blue' onClick={onOpen}>Buy</Button>
-        <Modal isOpen={isOpen} onClose={onClose}>
+        <Button colorScheme='blue' onClick={onModalOpen}>Buy</Button>
+        <Modal isOpen={isModalOpen} onClose={onModalClose}>
           <ModalOverlay />
           <ModalContent>
           
@@ -90,12 +151,60 @@ import {
   
             <ModalFooter>
               <Button colorScheme='blue' mr={3} onClick={handleBuy}>
-                Save
+                Buy
               </Button>
-              <Button variant='ghost' onClick={onClose}>Cancel</Button>
+              <Button variant='ghost' onClick={onModalClose}>Cancel</Button>
             </ModalFooter>
           </ModalContent>
         </Modal>
+        <AlertDialog
+        isOpen={isAlertOpen}
+        onClose={onAlertClose}
+      >
+        <AlertDialogOverlay>
+          <AlertDialogContent>
+            <AlertDialogHeader fontSize='lg' fontWeight='bold'>
+              {alertHeader}
+            </AlertDialogHeader>
+
+            <AlertDialogBody>
+              {alertMessage}
+            </AlertDialogBody>
+
+            <AlertDialogFooter>
+              <Button onClick={onAlertClose}>
+                Ok
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialogOverlay>
+      </AlertDialog>
+
+      <AlertDialog
+        isOpen={isCommitOpen}
+        onClose={onCommitClose}
+      >
+        <AlertDialogOverlay>
+          <AlertDialogContent>
+            <AlertDialogHeader fontSize='lg' fontWeight='bold'>
+              Commit Buy
+            </AlertDialogHeader>
+
+            <AlertDialogBody>
+              Are you sure you want to buy {stockSymbol}?
+            </AlertDialogBody>
+
+            <AlertDialogFooter>
+              <Button onClick={cancelBuy}>
+                Cancel
+              </Button>
+              <Button colorScheme='red' onClick={commitBuy} ml={3}>
+                Buy
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialogOverlay>
+      </AlertDialog>
       </Box>
     )
   }

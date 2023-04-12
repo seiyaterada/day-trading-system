@@ -18,6 +18,8 @@ import BuyButton from "./buttons/BuyButton";
 import StockList from "../stocklist/StockList";
 import AddButton from "./buttons/AddButton";
 import SellButton from "./buttons/SellButton";
+import CommitBuy from "./buttons/CommitBuy";
+import CommitSell from "./buttons/CommitSell";
 
 const MainPage = (props) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -31,10 +33,6 @@ const MainPage = (props) => {
         <AddButton/>
         <BuyButton/>
         <SellButton/>
-        {/* <Button colorScheme='blue' onClick={onOpen}>Set buy</Button>
-        <Button colorScheme='blue' onClick={onOpen}>Set sell</Button>
-        <Button colorScheme='blue' onClick={onOpen}>Cancel set buy</Button>
-        <Button colorScheme='blue' onClick={onOpen}>Cancel set sell</Button> */}
       </Grid>
 
       <Modal isOpen={isOpen} onClose={onClose}>
