@@ -1,14 +1,21 @@
 version: '3'
 services:
+    frontend: 
+        build: ./frontend/day-trading-app/
+        ports:
+            - "3000:3000"
+        networks:
+            - my-network
+        restart: always
     transact:
         # container_name: TransactionServer
         build: ./transaction-server/
         ports:
-            - "3000"
+            - "4000"
         networks:
             - my-network
         environment:
-            - PORT=3000
+            - PORT=4000
         depends_on:
             - mongo
             - redis

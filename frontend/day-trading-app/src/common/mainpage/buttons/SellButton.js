@@ -26,7 +26,7 @@ import {
     AlertDialogOverlay, 
   } from '@chakra-ui/react'
 
-  const url = "http://localhost:3000";
+  const url = "http://localhost:80";
 
   class Command {
       transactionId;
