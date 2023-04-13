@@ -38,6 +38,7 @@ app.post('/redis', async (req, res) => {
 
 
 app.post('/add', async (req, res) => {
+  console.log("ADD REQUEST RECIEvED");
   const db = await connectToDatabase();
   if(!db) { 
     res.send("Error: Database connection failed").status(500);
@@ -48,11 +49,12 @@ app.post('/add', async (req, res) => {
   let errorLogs = await db.collection("ERROR _LOGS");
   let users = await db.collection("USERS");
 
-  const username = 'test1'
   const transactionId: number = req.body.transactionId;
+  const username: string = req.body.username;
+  const amount: number = req.body.amount;
   const user: User = {
     username: username,
-    balance: 1000
+    balance: amount
   }
   await userCommandLogs.insertOne({
     type: "UserCommandType",
@@ -82,7 +84,7 @@ app.post('/add', async (req, res) => {
       funds: user.balance
     });
   
-    res.send(result).status(200);
+    res.send(`Successfully added ${amount} to ${username}`).status(200);
   
   } catch(e:any) {
     await errorLogs.insertOne({
@@ -189,16 +191,16 @@ app.post('/buy', async (req, res) => {
   let errorLogs = await db.collection("ERROR_LOGS");
   let users = await db.collection("USERS");
 
-  // const transactionId: number = req.body.transactionId;
-  // const username: string = req.body.username;
-  // const stockSymbol: string = req.body.stockSymbol;
-  // const amount: number = req.body.amount;
+  const transactionId: number = req.body.transactionId;
+  const username: string = req.body.username;
+  const stockSymbol: string = req.body.stockSymbol;
+  const amount: number = req.body.amount;
 
   // Test Data
-  const transactionId: number = 10;
-  const username: string = "test1";
-  const stockSymbol: string = "SYM";
-  const amount: number = 100;
+  // const transactionId: number = 10;
+  // const username: string = "test1";
+  // const stockSymbol: string = "SYM";
+  // const amount: number = 100;
 
   await userCommandLogs.insertOne({
     type: "UserCommandType",
@@ -291,14 +293,14 @@ app.post('/commitBuy', async (req, res) => {
   let errorLogs = await db.collection("ERROR_LOGS");
   let users = await db.collection("USERS");
 
-  // const transactionId: number = req.body.transactionId;
-  // const username: string = req.body.username;
-  // const stockSymbol: string = req.body.stockSymbol;
+  const transactionId: number = req.body.transactionId;
+  const username: string = req.body.username;
+  //const stockSymbol: string = req.body.stockSymbol;
 
   // Test Data
-  const transactionId: number = 11;
-  const username: string = "test1";
-  const stockSymbol: string = "SYM";
+  // const transactionId: number = 11;
+  // const username: string = "test1";
+  const stockSymbol: string = "S";
 
   await userCommandLogs.insertOne({
     type: "UserCommandType",
@@ -431,14 +433,14 @@ app.post('/cancelBuy', async (req, res) => {
   let errorLogs = await db.collection("ERROR_LOGS");
   let users = await db.collection("USERS");
 
-  // const transactionId: number = req.body.transactionId;
-  // const username: string = req.body.username;
-  // const stockSymbol: string = req.body.stockSymbol;
+  const transactionId: number = req.body.transactionId;
+  const username: string = req.body.username;
+  const stockSymbol: string = req.body.stockSymbol;
 
   // Test Data
-  const transactionId: number = 12;
-  const username: string = "test1";
-  const stockSymbol: string = "SYM";
+  // const transactionId: number = 12;
+  // const username: string = "test1";
+  // const stockSymbol: string = "SYM";
 
   await userCommandLogs.insertOne({
     type: "UserCommandType",
@@ -526,16 +528,16 @@ app.post('/sell', async (req, res) => {
   let errorLogs = await db.collection("ERROR_LOGS");
   let users = await db.collection("USERS");
   
-  // const transactionId: number = req.body.transactionId;
-  // const username: string = req.body.username;
-  // const stockSymbol: string = req.body.stockSymbol;
-  // const amount: number = req.body.amount;
+  const transactionId: number = req.body.transactionId;
+  const username: string = req.body.username;
+  const stockSymbol: string = req.body.stockSymbol;
+  const amount: number = req.body.amount;
 
   // Test Data
-  const transactionId: number = 14;
-  const username: string = "test1";
-  const stockSymbol: string = "SYM";
-  const amount: number = 100;
+  // const transactionId: number = 14;
+  // const username: string = "test1";
+  // const stockSymbol: string = "SYM";
+  // const amount: number = 100;
 
   await userCommandLogs.insertOne({
     type: "UserCommandType",
@@ -660,14 +662,14 @@ app.post('/commitSell', async (req, res) => {
   let errorLogs = await db.collection("ERROR_LOGS");
   let users = await db.collection("USERS");
 
-  // const transactionId: number = req.body.transactionId;
-  // const username: string = req.body.username;
+  const transactionId: number = req.body.transactionId;
+  const username: string = req.body.username;
   // const stockSymbol: string = req.body.stockSymbol;
 
   // Test Data
-  const transactionId: number = 15;
-  const username: string = "test1";
-  const stockSymbol: string = "SYM";
+  // const transactionId: number = 15;
+  // const username: string = "test1";
+  const stockSymbol: string = "S";
 
   await userCommandLogs.insertOne({
     type: "UserCommandType",
@@ -772,14 +774,14 @@ app.post('/cancelSell', async (req, res) => {
   let errorLogs = await db.collection("ERROR_LOGS");
   let users = await db.collection("USERS");
   
-  // const transactionId: number = req.body.transactionId;
-  // const username: string = req.body.username;
-  // const stockSymbol: string = req.body.stockSymbol;
+  const transactionId: number = req.body.transactionId;
+  const username: string = req.body.username;
+  const stockSymbol: string = req.body.stockSymbol;
 
   // Test Data
-  const transactionId: number = 15;
-  const username: string = "test1";
-  const stockSymbol: string = "SYM";
+  // const transactionId: number = 15;
+  // const username: string = "test1";
+  // const stockSymbol: string = "SYM";
   
   await userCommandLogs.insertOne({
     type: "UserCommandType",
