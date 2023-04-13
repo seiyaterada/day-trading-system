@@ -35,7 +35,7 @@ const SignInPage = (props) => {
     event.preventDefault();
     window.username = username;
     const commandToSend = new Command(window.transactionNumber, username, 0, null, null);
-    const url = "http://localhost:3000/add";
+    const url = "http://localhost:80/add";
     axios
         .post(url, commandToSend)
         .then((response) => {
