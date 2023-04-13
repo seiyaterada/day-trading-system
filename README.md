@@ -15,5 +15,3 @@ all the containers needed for the application</p>
 
 ## Architecture
 ![architecture](https://user-images.githubusercontent.com/54200250/231621622-319bddfc-8787-4c3b-8ca2-14ffebe2d3c9.png)
-
-## Performance
