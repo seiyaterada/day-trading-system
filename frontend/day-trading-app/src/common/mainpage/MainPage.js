@@ -20,8 +20,6 @@ import BuyButton from "./buttons/BuyButton";
 import StockList from "../stocklist/StockList";
 import AddButton from "./buttons/AddButton";
 import SellButton from "./buttons/SellButton";
-import CommitBuy from "./buttons/CommitBuy";
-import CommitSell from "./buttons/CommitSell";
 
 const MainPage = (props) => {
   const [isOpen, setIsOpen] = useState(false);
